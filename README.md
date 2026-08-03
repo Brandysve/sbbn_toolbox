@@ -3,9 +3,9 @@
 Application Windows locale et portable pour convertir des images en PDF et
 réorganiser puis fusionner des pages PDF.
 
-Le dépôt se trouve actuellement à la **Phase 1** : il fournit le design system,
-les quatre écrans et leur navigation, sans logique de traitement de documents
-ni configuration persistante.
+Le dépôt se trouve actuellement à la **Phase 2** : il fournit le design system,
+les quatre écrans, leur navigation et une configuration portable du dossier de
+données. Aucune logique de traitement de documents n'est encore implémentée.
 
 ## Prérequis de développement
 

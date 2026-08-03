@@ -41,11 +41,27 @@ SETTINGS_TITLE = "Paramètres"
 SETTINGS_DESCRIPTION = "Personnalisez le comportement de SBBN Toolbox."
 DATA_SECTION_TITLE = "Dossier de données"
 DATA_SECTION_DESCRIPTION = (
-    "L’emplacement des préférences pourra être choisi lors d’une prochaine phase."
+    "Choisissez où conserver les préférences et le journal technique de l’application."
 )
 DATA_PATH_LABEL = "Emplacement actuel"
 DATA_PATH_PLACEHOLDER = "Non configuré"
 CHOOSE_FOLDER = "Choisir un dossier"
+USE_NEW_LOCATION = "Utiliser le nouvel emplacement"
+MIGRATE_SETTINGS = "Déplacer les paramètres actuels"
+SELECT_DATA_FOLDER = "Sélectionner le dossier de données"
+FIRST_LAUNCH_TITLE = "Choisir le dossier de données"
+FIRST_LAUNCH_MESSAGE = (
+    "SBBN Toolbox doit créer son dossier de données. Vous pouvez utiliser le dossier data "
+    "à côté du programme ou choisir un autre emplacement."
+)
+USE_DEFAULT_DATA = "Utiliser le dossier data"
+CHOOSE_OTHER_DATA = "Choisir un autre emplacement"
+DATA_LOCATION_UPDATED = "Le dossier de données a été mis à jour."
+DATA_LOCATION_MIGRATED = "Les paramètres ont été déplacés vers le nouvel emplacement."
+DATA_LOCATION_ERROR_TITLE = "Dossier de données inaccessible"
+DATA_LOCATION_RECOVERY = (
+    "Le dossier configuré ne peut pas être utilisé. Choisissez un autre emplacement."
+)
 INTERFACE_SECTION_TITLE = "Interface"
 INTERFACE_SECTION_DESCRIPTION = "L’application suit automatiquement la mise à l’échelle Windows."
 SCALE_LABEL = "Mise à l’échelle"

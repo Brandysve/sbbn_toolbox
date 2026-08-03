@@ -31,6 +31,7 @@ from sbbn_toolbox.ui.pages.settings_page import SettingsPage
 from sbbn_toolbox.ui.theme.tokens import SPACING
 from sbbn_toolbox.ui.widgets.buttons import NavigationButton
 from sbbn_toolbox.ui.widgets.toast import Toast
+from sbbn_toolbox.viewmodels.settings_vm import SettingsViewModel
 
 
 class Page(IntEnum):
@@ -45,7 +46,7 @@ class Page(IntEnum):
 class MainWindow(QMainWindow):
     """Fenêtre racine moderne avec navigation latérale accessible."""
 
-    def __init__(self) -> None:
+    def __init__(self, settings_viewmodel: SettingsViewModel | None = None) -> None:
         super().__init__()
         self.setWindowTitle(APPLICATION_NAME)
         self.setMinimumSize(960, 640)
@@ -74,7 +75,7 @@ class MainWindow(QMainWindow):
         self.home_page = HomePage()
         self.images_page = ImageConverterPage()
         self.pdf_page = PdfMergerPage()
-        self.settings_page = SettingsPage()
+        self.settings_page = SettingsPage(settings_viewmodel)
         for page in (self.home_page, self.images_page, self.pdf_page, self.settings_page):
             self.page_stack.addWidget(self._scrollable(page))
 
@@ -91,6 +92,10 @@ class MainWindow(QMainWindow):
         self.settings_page.notification_requested.connect(self.toast.show_message)
 
         self.navigate_to(Page.HOME)
+
+    def initialize_configuration(self) -> None:
+        """Démarrer le parcours de configuration après affichage de la fenêtre."""
+        self.settings_page.initialize_configuration()
 
     def _create_sidebar(self) -> QWidget:
         sidebar = QWidget()
