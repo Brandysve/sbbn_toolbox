@@ -38,6 +38,22 @@ def assert_no_partial(path: Path) -> None:
     assert not list(path.glob(".*.sbbn-partial-*.pdf"))
 
 
+def windows_safe_long_folder(root: Path, filename: str) -> Path:
+    """Créer un chemin long et Unicode sans dépendre des chemins étendus Windows."""
+    maximum_full_length = 235
+    available = maximum_full_length - len(str(root)) - len(filename) - 2
+    fragment = "dossier PDF long avec espaces et accents é 文件 "
+    folder_name = (fragment * 8)[:available].rstrip()
+    assert len(folder_name) >= 40
+    folder = root / folder_name
+    folder.mkdir()
+    full_path = folder / filename
+    assert len(str(full_path)) >= 180
+    assert len(str(full_path)) <= maximum_full_length
+    assert "é" in str(full_path) and "文件" in str(full_path)
+    return folder
+
+
 def output_sizes(path: Path) -> list[tuple[float, float]]:
     return [
         (float(page.mediabox.width), float(page.mediabox.height)) for page in PdfReader(path).pages
@@ -246,12 +262,12 @@ def test_preview_cache_is_bounded_and_released_by_source(tmp_path: Path) -> None
 def test_long_unicode_paths_and_identical_pdf_names_from_different_folders(
     tmp_path: Path,
 ) -> None:
-    first_folder = tmp_path / ("dossier PDF long avec accents é " * 3)
+    filename = "document identique.pdf"
+    first_folder = windows_safe_long_folder(tmp_path, filename)
     second_folder = tmp_path / "deuxième dossier 文件"
-    first_folder.mkdir()
     second_folder.mkdir()
-    first = first_folder / "document identique.pdf"
-    second = second_folder / "document identique.pdf"
+    first = first_folder / filename
+    second = second_folder / filename
     first_original = create_pdf(first, [(100, 200)])
     second_original = create_pdf(second, [(300, 400)])
     destination = tmp_path / "fusion Unicode finale.pdf"

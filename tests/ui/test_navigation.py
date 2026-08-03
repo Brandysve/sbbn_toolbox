@@ -135,6 +135,8 @@ def test_all_pages_remain_usable_when_resized(
 @pytest.mark.parametrize("scale_factor", (1.0, 1.25, 1.5))
 def test_qt_layouts_with_simulated_scale_factor(scale_factor: float) -> None:
     script = """
+import sys
+
 from PySide6.QtWidgets import QPushButton, QScrollArea
 
 from sbbn_toolbox.app import create_application
@@ -145,7 +147,12 @@ window = MainWindow()
 window.resize(window.minimumSize())
 window.show()
 application.processEvents()
-assert abs(window.devicePixelRatio() - SCALE_FACTOR) < 0.01
+device_scale = window.devicePixelRatio()
+if sys.platform == "win32":
+    # QT_SCALE_FACTOR multiplie la mise à l'échelle Windows native.
+    assert device_scale + 0.01 >= SCALE_FACTOR
+else:
+    assert abs(device_scale - SCALE_FACTOR) < 0.01
 for page in Page:
     window.navigate_to(page)
     application.processEvents()
@@ -167,8 +174,9 @@ for page in Page:
 print("dpi-layout-ok")
 """.replace("SCALE_FACTOR", str(scale_factor))
     environment = os.environ.copy()
-    environment["QT_QPA_PLATFORM"] = "offscreen"
+    environment["QT_QPA_PLATFORM"] = "windows" if sys.platform == "win32" else "offscreen"
     environment["QT_SCALE_FACTOR"] = str(scale_factor)
+    environment["QT_SCALE_FACTOR_ROUNDING_POLICY"] = "PassThrough"
 
     result = subprocess.run(
         [sys.executable, "-c", script],

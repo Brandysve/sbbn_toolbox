@@ -31,6 +31,22 @@ def assert_no_partial_files(path: Path) -> None:
     assert not list(path.glob(".*.sbbn-partial-*.pdf"))
 
 
+def windows_safe_long_folder(root: Path, filename: str) -> Path:
+    """Créer un chemin long et Unicode sans dépasser la limite Windows classique."""
+    maximum_full_length = 235
+    available = maximum_full_length - len(str(root)) - len(filename) - 2
+    fragment = "dossier long avec espaces et accents é 文件 "
+    folder_name = (fragment * 8)[:available].rstrip()
+    assert len(folder_name) >= 40
+    folder = root / folder_name
+    folder.mkdir()
+    full_path = folder / filename
+    assert len(str(full_path)) >= 180
+    assert len(str(full_path)) <= maximum_full_length
+    assert "é" in str(full_path) and "文件" in str(full_path)
+    return folder
+
+
 def page_size(path: Path, index: int = 0) -> tuple[float, float]:
     page = PdfReader(path).pages[index]
     return float(page.mediabox.width), float(page.mediabox.height)
@@ -317,12 +333,12 @@ def test_atomic_replace_failure_preserves_existing_result_and_cleans_partial(
 def test_long_unicode_paths_and_identical_names_from_different_folders(
     tmp_path: Path,
 ) -> None:
-    first_folder = tmp_path / ("dossier long avec espaces et accents é " * 3)
+    filename = "image identique.png"
+    first_folder = windows_safe_long_folder(tmp_path, filename)
     second_folder = tmp_path / "autre dossier 文件"
-    first_folder.mkdir()
     second_folder.mkdir()
-    first = first_folder / "image identique.png"
-    second = second_folder / "image identique.png"
+    first = first_folder / filename
+    second = second_folder / filename
     first_original = create_image(first, "PNG", (120, 80))
     second_original = create_image(second, "PNG", (80, 120))
     validator = ImageValidationService()

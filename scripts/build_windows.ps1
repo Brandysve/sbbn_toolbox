@@ -68,14 +68,7 @@ try {
         Invoke-Checked $python @("-m", "ruff", "check", ".")
         Invoke-Checked $python @("-m", "ruff", "format", "--check", ".")
         Invoke-Checked $python @("-m", "mypy", "src")
-        $previousPlatform = $env:QT_QPA_PLATFORM
-        $env:QT_QPA_PLATFORM = "offscreen"
-        try {
-            Invoke-Checked $python @("-m", "pytest", "-q")
-        }
-        finally {
-            $env:QT_QPA_PLATFORM = $previousPlatform
-        }
+        Invoke-Checked $python @("-m", "pytest", "-q")
     }
 
     # Ces deux dossiers sont les seules sorties de compilation remplacées.
