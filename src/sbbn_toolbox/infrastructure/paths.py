@@ -11,6 +11,12 @@ def program_directory() -> Path:
     indépendamment du dossier courant. Dans l'application compilée, il s'agit du
     dossier qui contient l'exécutable.
     """
-    if getattr(sys, "frozen", False):
-        return Path(sys.executable).resolve().parent
+    if getattr(sys, "frozen", False) or "__compiled__" in globals():
+        executable_directory = Path(sys.executable).resolve().parent
+        if (
+            executable_directory.name.lower() == "runtime"
+            and (executable_directory.parent / "SBBN-Toolbox.exe").is_file()
+        ):
+            return executable_directory.parent
+        return executable_directory
     return Path(__file__).resolve().parents[3]

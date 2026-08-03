@@ -117,6 +117,10 @@ class ConfigService:
         ):
             raise InvalidConfigurationError("Le fichier config.json est invalide.")
         data_path = Path(payload["dataPath"])
+        if not data_path.is_absolute():
+            data_path = self.program_dir / data_path
+            if not data_path.exists():
+                return None
         self._prepare_data_directory(data_path, create_missing=True)
         return data_path
 

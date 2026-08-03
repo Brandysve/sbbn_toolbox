@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "sbbn-toolbox"
-version = "0.0.0"
+version = "1.0.0"
 description = "Boîte à outils PDF locale et portable de SBBN"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"

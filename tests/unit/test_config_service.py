@@ -225,3 +225,39 @@ def test_persistent_files_contain_no_documentary_data(tmp_path: Path) -> None:
     assert "history" not in serialized
     assert "recent" not in serialized
     assert ".pdf" not in serialized
+
+
+def test_packaged_relative_default_prompts_until_data_is_initialized(tmp_path: Path) -> None:
+    program_dir = tmp_path / "SBBN-Toolbox"
+    program_dir.mkdir()
+    service = ConfigService(program_dir)
+    service.config_path.write_text(
+        '{"schemaVersion": 1, "dataPath": "data"}',
+        encoding="utf-8",
+    )
+
+    assert service.load_data_path() is None
+
+    initialized = service.initialize(service.default_data_path)
+
+    assert initialized == program_dir / "data"
+    assert service.load_data_path() == initialized
+
+
+def test_packaged_relative_data_path_is_resolved_from_program_directory(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    program_dir = tmp_path / "SBBN-Toolbox"
+    program_dir.mkdir()
+    service = ConfigService(program_dir)
+    service.initialize(program_dir / "data")
+    service.config_path.write_text(
+        '{"schemaVersion": 1, "dataPath": "data"}',
+        encoding="utf-8",
+    )
+    unrelated_working_directory = tmp_path / "ailleurs"
+    unrelated_working_directory.mkdir()
+    monkeypatch.chdir(unrelated_working_directory)
+
+    assert service.load_data_path() == program_dir / "data"

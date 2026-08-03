@@ -27,9 +27,20 @@ def create_application(arguments: Sequence[str] | None = None) -> QApplication:
 
 def run(arguments: Sequence[str] | None = None) -> int:
     """Afficher la fenêtre principale et démarrer la boucle Qt."""
-    application = create_application(arguments)
+    effective_arguments = list(arguments) if arguments is not None else sys.argv
+    smoke_test = "--smoke-test" in effective_arguments
+    application = create_application(effective_arguments)
     settings_viewmodel = SettingsViewModel(ConfigService(program_directory()))
     window = MainWindow(settings_viewmodel)
     window.show()
-    QTimer.singleShot(0, window.initialize_configuration)
+    if smoke_test:
+
+        def initialize_smoke_test() -> None:
+            if settings_viewmodel.load() is None:
+                settings_viewmodel.initialize(settings_viewmodel.default_data_path)
+            QTimer.singleShot(250, window.close)
+
+        QTimer.singleShot(0, initialize_smoke_test)
+    else:
+        QTimer.singleShot(0, window.initialize_configuration)
     return application.exec()
