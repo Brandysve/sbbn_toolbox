@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QPushButton,
     QScrollArea,
+    QSpinBox,
     QWidget,
 )
 from pytestqt.qtbot import QtBot
@@ -104,14 +105,23 @@ def test_all_pages_remain_usable_when_resized(
         page_widget = scroll.widget()
         assert page_widget is not None
         assert scroll.horizontalScrollBar().maximum() == 0
-        assert scroll.verticalScrollBar().maximum() == 0
+        if page is not Page.IMAGES:
+            assert scroll.verticalScrollBar().maximum() == 0
         assert page_widget.minimumSizeHint().width() <= scroll.viewport().width()
-        assert page_widget.minimumSizeHint().height() <= scroll.viewport().height()
+        if page is not Page.IMAGES:
+            assert page_widget.minimumSizeHint().height() <= scroll.viewport().height()
 
         buttons = page_widget.findChildren(QPushButton)
         assert buttons
-        controls: list[QWidget] = [*buttons, *page_widget.findChildren(QLineEdit)]
+        line_edits = [
+            field
+            for field in page_widget.findChildren(QLineEdit)
+            if not isinstance(field.parentWidget(), QSpinBox)
+        ]
+        controls: list[QWidget] = [*buttons, *line_edits]
         for control in controls:
+            if control.isHidden():
+                continue
             assert control.isVisible()
             assert control.width() >= control.minimumSizeHint().width()
             assert control.height() >= control.minimumSizeHint().height()
@@ -142,12 +152,16 @@ for page in Page:
     scroll = window.page_stack.currentWidget()
     assert isinstance(scroll, QScrollArea)
     assert scroll.horizontalScrollBar().maximum() == 0
-    assert scroll.verticalScrollBar().maximum() == 0
+    if page is not Page.IMAGES:
+        assert scroll.verticalScrollBar().maximum() == 0
     page_widget = scroll.widget()
     assert page_widget is not None
     buttons = page_widget.findChildren(QPushButton)
     assert buttons
-    assert all(button.isVisible() for button in buttons)
+    assert all(
+        button.isVisible() or button.objectName() == "cancelConversionButton"
+        for button in buttons
+    )
 print("dpi-layout-ok")
 """.replace("SCALE_FACTOR", str(scale_factor))
     environment = os.environ.copy()

@@ -13,6 +13,7 @@ class DropZone(QFrame):
 
     selection_requested = Signal()
     drop_detected = Signal()
+    files_dropped = Signal(list)
 
     def __init__(
         self,
@@ -74,6 +75,9 @@ class DropZone(QFrame):
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
             self.drop_detected.emit()
+            self.files_dropped.emit(
+                [url.toLocalFile() for url in event.mimeData().urls() if url.isLocalFile()]
+            )
         else:
             event.ignore()
 

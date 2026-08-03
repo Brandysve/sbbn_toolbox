@@ -3,6 +3,7 @@
 from enum import IntEnum
 
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import (
     QButtonGroup,
     QFrame,
@@ -167,3 +168,8 @@ class MainWindow(QMainWindow):
         """Afficher une page et synchroniser l'état actif de la navigation."""
         self.page_stack.setCurrentIndex(int(page))
         self.navigation_buttons[page].setChecked(True)
+
+    def closeEvent(self, event: QCloseEvent) -> None:  # noqa: N802
+        """Attendre le nettoyage d'une conversion avant de fermer."""
+        self.images_page.viewmodel.shutdown()
+        super().closeEvent(event)

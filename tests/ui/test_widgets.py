@@ -1,8 +1,12 @@
+from pathlib import Path
+
+import pytest
+from PIL import Image
 from PySide6.QtCore import QMimeData, QPointF, Qt, QUrl
 from PySide6.QtGui import QDropEvent
+from PySide6.QtWidgets import QFileDialog
 from pytestqt.qtbot import QtBot
 
-from sbbn_toolbox.constants import PHASE_PLACEHOLDER_MESSAGE
 from sbbn_toolbox.ui.main_window import MainWindow
 from sbbn_toolbox.ui.pages.image_converter_page import ImageConverterPage
 from sbbn_toolbox.ui.theme.tokens import SPACING
@@ -42,19 +46,36 @@ def test_drop_zone_detects_but_does_not_load_drop(qtbot: QtBot) -> None:
         Qt.KeyboardModifier.NoModifier,
     )
 
-    with qtbot.waitSignal(drop_zone.drop_detected):
+    with (
+        qtbot.waitSignal(drop_zone.drop_detected),
+        qtbot.waitSignal(drop_zone.files_dropped) as dropped,
+    ):
         drop_zone.dropEvent(event)
 
+    assert dropped.args == [["document.pdf"]]
 
-def test_placeholder_action_requests_notification(qtbot: QtBot) -> None:
+
+def test_image_selection_imports_a_valid_file(
+    qtbot: QtBot,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source = tmp_path / "image sélectionnée.png"
+    Image.new("RGB", (40, 30), "purple").save(source)
     page = ImageConverterPage()
     qtbot.addWidget(page)
+    monkeypatch.setattr(
+        QFileDialog,
+        "getOpenFileNames",
+        lambda *args: ([str(source)], ""),
+    )
 
-    with qtbot.waitSignal(page.notification_requested) as blocker:
-        drop_zone = page.findChild(DropZone)
-        drop_zone.selection_requested.emit()
+    drop_zone = page.findChild(DropZone)
+    drop_zone.selection_requested.emit()
 
-    assert blocker.args == [PHASE_PLACEHOLDER_MESSAGE]
+    assert len(page.viewmodel.items) == 1
+    assert page.grid.count() == 1
+    assert page.create_button.isEnabled()
 
 
 def test_toast_displays_message(qtbot: QtBot) -> None:
