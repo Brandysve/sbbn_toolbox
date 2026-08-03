@@ -1,5 +1,17 @@
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QApplication, QScrollArea
+import os
+import subprocess
+import sys
+
+import pytest
+from PySide6.QtCore import QRect, Qt
+from PySide6.QtWidgets import (
+    QApplication,
+    QLayout,
+    QLineEdit,
+    QPushButton,
+    QScrollArea,
+    QWidget,
+)
 from pytestqt.qtbot import QtBot
 
 from sbbn_toolbox.constants import APPLICATION_NAME
@@ -45,15 +57,110 @@ def test_navigation_is_keyboard_accessible(qtbot: QtBot) -> None:
     assert button.accessibleName()
 
 
-def test_layout_fits_minimum_logical_width(qtbot: QtBot, qapp: QApplication) -> None:
+WINDOW_SIZES = ((960, 640), (1080, 700), (1440, 900))
+
+
+def _assert_layout_items_do_not_overlap(layout: QLayout) -> None:
+    widget_rects: list[QRect] = []
+    for index in range(layout.count()):
+        item = layout.itemAt(index)
+        widget = item.widget()
+        child_layout = item.layout()
+        if widget is not None and widget.isVisible():
+            widget_rects.append(widget.geometry())
+        if child_layout is not None:
+            _assert_layout_items_do_not_overlap(child_layout)
+
+    for index, first in enumerate(widget_rects):
+        for second in widget_rects[index + 1 :]:
+            assert not first.intersects(second)
+
+
+def _assert_widget_inside_page(widget: QWidget, page: QWidget) -> None:
+    top_left = widget.mapTo(page, widget.rect().topLeft())
+    widget_rect = QRect(top_left, widget.size())
+    assert page.rect().contains(widget_rect)
+
+
+@pytest.mark.parametrize(("width", "height"), WINDOW_SIZES)
+def test_all_pages_remain_usable_when_resized(
+    qtbot: QtBot,
+    qapp: QApplication,
+    width: int,
+    height: int,
+) -> None:
     window = MainWindow()
     qtbot.addWidget(window)
-    window.resize(window.minimumSize())
+    window.resize(width, height)
     window.show()
     qapp.processEvents()
 
-    assert window.size().width() >= 960
-    for index in range(window.page_stack.count()):
-        scroll = window.page_stack.widget(index)
+    assert window.size() == window.size().expandedTo(window.minimumSize())
+    for page in Page:
+        window.navigate_to(page)
+        qapp.processEvents()
+        scroll = window.page_stack.currentWidget()
         assert isinstance(scroll, QScrollArea)
-        assert scroll.widget().minimumSizeHint().width() <= scroll.viewport().width()
+        page_widget = scroll.widget()
+        assert page_widget is not None
+        assert scroll.horizontalScrollBar().maximum() == 0
+        assert scroll.verticalScrollBar().maximum() == 0
+        assert page_widget.minimumSizeHint().width() <= scroll.viewport().width()
+        assert page_widget.minimumSizeHint().height() <= scroll.viewport().height()
+
+        buttons = page_widget.findChildren(QPushButton)
+        assert buttons
+        controls: list[QWidget] = [*buttons, *page_widget.findChildren(QLineEdit)]
+        for control in controls:
+            assert control.isVisible()
+            assert control.width() >= control.minimumSizeHint().width()
+            assert control.height() >= control.minimumSizeHint().height()
+            _assert_widget_inside_page(control, page_widget)
+
+        layout = page_widget.layout()
+        assert layout is not None
+        _assert_layout_items_do_not_overlap(layout)
+
+
+@pytest.mark.parametrize("scale_factor", (1.25, 1.5))
+def test_qt_layouts_with_simulated_scale_factor(scale_factor: float) -> None:
+    script = """
+from PySide6.QtWidgets import QPushButton, QScrollArea
+
+from sbbn_toolbox.app import create_application
+from sbbn_toolbox.ui.main_window import MainWindow, Page
+
+application = create_application([])
+window = MainWindow()
+window.resize(window.minimumSize())
+window.show()
+application.processEvents()
+assert abs(window.devicePixelRatio() - SCALE_FACTOR) < 0.01
+for page in Page:
+    window.navigate_to(page)
+    application.processEvents()
+    scroll = window.page_stack.currentWidget()
+    assert isinstance(scroll, QScrollArea)
+    assert scroll.horizontalScrollBar().maximum() == 0
+    assert scroll.verticalScrollBar().maximum() == 0
+    page_widget = scroll.widget()
+    assert page_widget is not None
+    buttons = page_widget.findChildren(QPushButton)
+    assert buttons
+    assert all(button.isVisible() for button in buttons)
+print("dpi-layout-ok")
+""".replace("SCALE_FACTOR", str(scale_factor))
+    environment = os.environ.copy()
+    environment["QT_QPA_PLATFORM"] = "offscreen"
+    environment["QT_SCALE_FACTOR"] = str(scale_factor)
+
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "dpi-layout-ok" in result.stdout

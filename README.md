@@ -41,3 +41,23 @@ ruff format --check .
 mypy src
 pytest
 ```
+
+Les tests Qt automatisés s'exécutent avec la plateforme hors écran et simulent
+notamment les facteurs d'échelle 125 % et 150 %. La validation DPI Windows
+native sera effectuée en Phase 6 sur l'exécutable compilé, sur Windows 10 et 11.
+
+Pour lancer manuellement l'application avec une échelle simulée sous Linux ou
+macOS :
+
+```bash
+QT_SCALE_FACTOR=1.25 python -m sbbn_toolbox
+QT_SCALE_FACTOR=1.5 python -m sbbn_toolbox
+```
+
+Sous PowerShell :
+
+```powershell
+$env:QT_SCALE_FACTOR = "1.25"; python -m sbbn_toolbox
+$env:QT_SCALE_FACTOR = "1.5"; python -m sbbn_toolbox
+Remove-Item Env:QT_SCALE_FACTOR
+```
