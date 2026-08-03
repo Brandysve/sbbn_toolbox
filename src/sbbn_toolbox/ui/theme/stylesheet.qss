@@ -1,1 +1,194 @@
-/* La feuille de style SBBN sera implémentée en Phase 1. */
+* {
+    color: @text;
+    font-family: "Segoe UI", "Arial", sans-serif;
+    font-size: 14px;
+}
+
+QMainWindow, QWidget#appRoot, QStackedWidget#pageStack, QScrollArea#pageScroll {
+    background: @background;
+}
+
+QWidget#sidebar {
+    background: @primary;
+    border: none;
+}
+
+QLabel#brandMark {
+    background: @primary-light;
+    color: @primary;
+    border-radius: @radius-medium;
+    font-size: 18px;
+    font-weight: 700;
+    padding: 8px;
+}
+
+QLabel#brandName {
+    color: @on-primary;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+QLabel#brandTagline, QLabel#sidebarFooter {
+    color: @primary-light;
+    font-size: 12px;
+}
+
+QPushButton {
+    min-height: 42px;
+    padding: 0 18px;
+    border: 2px solid transparent;
+    border-radius: @radius-medium;
+    font-weight: 600;
+}
+
+QPushButton:focus {
+    border: 2px solid @primary-hover;
+}
+
+QPushButton[variant="primary"] {
+    color: @on-primary;
+    background: @primary;
+}
+
+QPushButton[variant="primary"]:hover,
+QPushButton[variant="primary"]:pressed {
+    background: @primary-hover;
+}
+
+QPushButton[variant="secondary"] {
+    color: @primary;
+    background: @background;
+    border: 1px solid @primary;
+}
+
+QPushButton[variant="secondary"]:hover,
+QPushButton[variant="secondary"]:pressed {
+    background: @primary-light;
+    border: 2px solid @primary-hover;
+}
+
+QPushButton:disabled {
+    color: @disabled;
+    background: @surface;
+    border: 1px solid @border;
+}
+
+QPushButton[nav="true"] {
+    color: @primary-light;
+    background: transparent;
+    border: 2px solid transparent;
+    text-align: left;
+    padding: 0 14px;
+    font-weight: 500;
+}
+
+QPushButton[nav="true"]:hover,
+QPushButton[nav="true"]:focus {
+    color: @on-primary;
+    background: @primary-hover;
+    border: 2px solid @primary-light;
+}
+
+QPushButton[nav="true"]:checked {
+    color: @primary;
+    background: @primary-light;
+    border: 2px solid @primary-light;
+    font-weight: 700;
+}
+
+QLabel[role="eyebrow"] {
+    color: @primary-hover;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+QLabel[role="pageTitle"] {
+    color: @text;
+    font-size: 30px;
+    font-weight: 700;
+}
+
+QLabel[role="description"] {
+    color: @text-secondary;
+    font-size: 15px;
+}
+
+QFrame[card="true"] {
+    background: @surface;
+    border: 1px solid @border;
+    border-radius: @radius-large;
+}
+
+QFrame[card="true"] QLabel[role="cardTitle"] {
+    color: @text;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+QFrame[card="true"] QLabel[role="cardIcon"] {
+    color: @primary;
+    background: @primary-light;
+    border-radius: @radius-medium;
+    font-size: 19px;
+    font-weight: 700;
+    padding: 10px;
+}
+
+QFrame#dropZone {
+    background: @surface;
+    border: 2px dashed @border;
+    border-radius: @radius-large;
+}
+
+QFrame#dropZone[dragActive="true"] {
+    background: @primary-light;
+    border: 2px dashed @primary-hover;
+}
+
+QFrame#dropZone:focus {
+    border: 2px solid @primary-hover;
+}
+
+QLabel[role="dropTitle"], QLabel[role="emptyTitle"], QLabel[role="sectionTitle"] {
+    color: @text;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+QLabel[role="muted"], QLabel[role="emptyDescription"] {
+    color: @text-secondary;
+}
+
+QFrame#emptyState {
+    background: @background;
+    border: 1px solid @border;
+    border-radius: @radius-large;
+}
+
+QFrame#toast {
+    background: @primary;
+    border: 1px solid @primary-hover;
+    border-radius: @radius-medium;
+}
+
+QFrame#toast QLabel {
+    color: @on-primary;
+    font-weight: 600;
+}
+
+QLineEdit {
+    min-height: 40px;
+    color: @text-secondary;
+    background: @background;
+    border: 1px solid @border;
+    border-radius: @radius-small;
+    padding: 0 12px;
+}
+
+QLineEdit:focus {
+    border: 2px solid @primary-hover;
+}
+
+QScrollArea {
+    border: none;
+}

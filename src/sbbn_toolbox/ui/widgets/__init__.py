@@ -1,1 +1,1 @@
-"""Widgets réutilisables, à implémenter en Phase 1."""
+"""Widgets réutilisables du design system SBBN."""

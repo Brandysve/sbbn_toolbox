@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QApplication
 
 from sbbn_toolbox.constants import APPLICATION_NAME
 from sbbn_toolbox.ui.main_window import MainWindow
+from sbbn_toolbox.ui.theme import load_stylesheet
 
 
 def create_application(arguments: Sequence[str] | None = None) -> QApplication:
@@ -15,6 +16,8 @@ def create_application(arguments: Sequence[str] | None = None) -> QApplication:
     if not isinstance(application, QApplication):
         application = QApplication(list(arguments) if arguments is not None else sys.argv)
     application.setApplicationName(APPLICATION_NAME)
+    application.setStyle("Fusion")
+    application.setStyleSheet(load_stylesheet())
     return application
 
 

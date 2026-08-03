@@ -3,9 +3,9 @@
 Application Windows locale et portable pour convertir des images en PDF et
 réorganiser puis fusionner des pages PDF.
 
-Le dépôt se trouve actuellement à la **Phase 0** : il fournit le squelette de
-l'application et une fenêtre PySide6 minimale, sans logique de traitement de
-documents.
+Le dépôt se trouve actuellement à la **Phase 1** : il fournit le design system,
+les quatre écrans et leur navigation, sans logique de traitement de documents
+ni configuration persistante.
 
 ## Prérequis de développement
 
