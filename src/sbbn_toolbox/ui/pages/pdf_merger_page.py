@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-from PySide6.QtCore import QUrl, Signal
-from PySide6.QtGui import QCloseEvent, QDesktopServices
+from PySide6.QtCore import Qt, QUrl, Signal
+from PySide6.QtGui import QCloseEvent, QDesktopServices, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QCheckBox,
     QFileDialog,
@@ -41,6 +41,11 @@ from sbbn_toolbox.constants import (
     REMOVE_SELECTED_PAGES,
     REORDER_PDF_DOCUMENTS,
     ROTATE_SELECTED_PAGES,
+    SHORTCUT_ADD_TOOLTIP,
+    SHORTCUT_CANCEL_TOOLTIP,
+    SHORTCUT_REMOVE_TOOLTIP,
+    SHORTCUT_SAVE_TOOLTIP,
+    SHORTCUT_SELECT_ALL_TOOLTIP,
 )
 from sbbn_toolbox.domain.pdf_page_item import PdfPageItem
 from sbbn_toolbox.ui.theme.tokens import SPACING
@@ -66,6 +71,7 @@ class PdfMergerPage(QWidget):
         self.viewmodel = viewmodel or PdfMergerViewModel()
         self._selected: list[str] = []
         self._operation_kind = "load"
+        self._exported_signature: tuple[tuple[str, int], ...] | None = None
         layout = QVBoxLayout(self)
         layout.setContentsMargins(SPACING.xxxl, SPACING.xxl, SPACING.xxxl, SPACING.xxl)
         layout.setSpacing(SPACING.xl)
@@ -74,6 +80,7 @@ class PdfMergerPage(QWidget):
 
         self.drop_zone = DropZone(PDF_DROP_TITLE, PDF_DROP_DESCRIPTION, ADD_PDF)
         self.drop_zone.selection_requested.connect(self._choose_pdfs)
+        self.drop_zone.setToolTip(SHORTCUT_ADD_TOOLTIP)
         self.drop_zone.files_dropped.connect(self._import_dropped_files)
         layout.addWidget(self.drop_zone)
         self.empty_state = EmptyState(PDF_EMPTY_TITLE, PDF_EMPTY_DESCRIPTION)
@@ -84,6 +91,7 @@ class PdfMergerPage(QWidget):
         self.grid.order_changed.connect(self.viewmodel.reorder)
         self.grid.selection_changed.connect(self._selection_changed)
         self.grid.preview_requested.connect(self.viewmodel.request_thumbnail)
+        self.grid.remove_selected_requested.connect(self._remove_selected)
         self.document_mode_checkbox = QCheckBox(REORDER_PDF_DOCUMENTS)
         self.document_mode_checkbox.setObjectName("documentModeCheckbox")
         self.document_mode_checkbox.toggled.connect(self._set_document_mode)
@@ -97,6 +105,7 @@ class PdfMergerPage(QWidget):
         self.add_more_button = ActionButton(ADD_MORE_PDF, variant="secondary")
         self.add_more_button.setObjectName("addMorePdfButton")
         self.add_more_button.clicked.connect(self._choose_pdfs)
+        self.add_more_button.setToolTip(SHORTCUT_ADD_TOOLTIP)
         self.add_more_button.hide()
         document_actions.addWidget(self.add_more_button)
         self.clear_button = ActionButton(CLEAR_PDF_PAGES, variant="secondary")
@@ -111,6 +120,7 @@ class PdfMergerPage(QWidget):
         selection_actions.addWidget(self.rotate_button)
         self.remove_button = ActionButton(REMOVE_SELECTED_PAGES, variant="secondary")
         self.remove_button.setEnabled(False)
+        self.remove_button.setToolTip(SHORTCUT_REMOVE_TOOLTIP)
         self.remove_button.clicked.connect(lambda: self.viewmodel.remove_selected(self._selected))
         selection_actions.addWidget(self.remove_button)
         selection_actions.addStretch()
@@ -120,6 +130,7 @@ class PdfMergerPage(QWidget):
         self.cancel_button = ActionButton(CANCEL_PDF_OPERATION, variant="secondary")
         self.cancel_button.setObjectName("cancelPdfOperationButton")
         self.cancel_button.clicked.connect(self.viewmodel.cancel)
+        self.cancel_button.setToolTip(SHORTCUT_CANCEL_TOOLTIP)
         self.cancel_button.hide()
         output_actions.addWidget(self.cancel_button)
         self.merge_button = ActionButton(MERGE_PDF)
@@ -147,6 +158,42 @@ class PdfMergerPage(QWidget):
         )
         self.viewmodel.merge_succeeded.connect(self._merge_succeeded)
         self.viewmodel.merge_failed.connect(self._show_error)
+        self._create_shortcuts()
+
+    @property
+    def has_unexported_selection(self) -> bool:
+        return (
+            bool(self.viewmodel.pages) and self._selection_signature() != self._exported_signature
+        )
+
+    def _create_shortcuts(self) -> None:
+        self._shortcut(QKeySequence.StandardKey.Open, self._choose_pdfs)
+        self._shortcut(QKeySequence(Qt.Key.Key_Delete), self._remove_selected)
+        self._shortcut(QKeySequence.StandardKey.SelectAll, self.grid.selectAll)
+        self._shortcut(QKeySequence.StandardKey.Save, self._save_if_available)
+        self._shortcut(QKeySequence(Qt.Key.Key_Escape), self._cancel_if_busy)
+        self.merge_button.setToolTip(SHORTCUT_SAVE_TOOLTIP)
+        self.grid.setToolTip(f"{SHORTCUT_SELECT_ALL_TOOLTIP} · {SHORTCUT_REMOVE_TOOLTIP}")
+
+    def _shortcut(self, key: QKeySequence | QKeySequence.StandardKey, callback: object) -> None:
+        shortcut = QShortcut(key, self)
+        shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        shortcut.activated.connect(callback)
+
+    def _remove_selected(self) -> None:
+        if not self.grid.document_mode:
+            self.viewmodel.remove_selected(self.grid.selected_identifiers())
+
+    def _save_if_available(self) -> None:
+        if self.merge_button.isEnabled():
+            self._choose_destination()
+
+    def _cancel_if_busy(self) -> None:
+        if self.viewmodel.is_busy:
+            self.viewmodel.cancel()
+
+    def _selection_signature(self) -> tuple[tuple[str, int], ...]:
+        return tuple((page.identifier, page.rotation) for page in self.viewmodel.pages)
 
     def _choose_pdfs(self) -> None:
         filenames, _ = QFileDialog.getOpenFileNames(self, ADD_PDF, "", PDF_FILES_INPUT_FILTER)
@@ -240,6 +287,7 @@ class PdfMergerPage(QWidget):
         QMessageBox.warning(self, PDF_IMPORT_ERROR_TITLE, message)
 
     def _merge_succeeded(self, result: str) -> None:
+        self._exported_signature = self._selection_signature()
         dialog = QMessageBox(self)
         dialog.setWindowTitle(PDF_SUCCESS_TITLE)
         dialog.setText(PDF_SUCCESS_MESSAGE.format(path=result))

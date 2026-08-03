@@ -166,3 +166,41 @@ def test_shutdown_cancels_loading_and_releases_workers(
 
     assert len(viewmodel.pages) < 50
     assert viewmodel.preview_service.cache_size_bytes == 0
+
+
+def test_successive_merge_error_then_success_releases_worker(
+    qtbot: QtBot,
+    tmp_path: Path,
+) -> None:
+    class FlakyMergeService:
+        calls = 0
+
+        def merge(
+            self,
+            pages: object,
+            destination: Path,
+            **kwargs: object,
+        ) -> Path:
+            del pages, kwargs
+            self.calls += 1
+            if self.calls == 1:
+                raise RuntimeError("échec contrôlé")
+            return destination
+
+    service = FlakyMergeService()
+    viewmodel = PdfMergerViewModel(merge_service=service)  # type: ignore[arg-type]
+    viewmodel.pages = [make_page(tmp_path / "source.pdf", 0)]
+
+    with qtbot.waitSignal(viewmodel.merge_failed, timeout=2_000):
+        viewmodel.start_merge(tmp_path / "échec.pdf", overwrite=False)
+    qtbot.waitUntil(lambda: not viewmodel.is_busy, timeout=2_000)
+    assert viewmodel._thread is None
+    assert viewmodel._worker is None
+
+    with qtbot.waitSignal(viewmodel.merge_succeeded, timeout=2_000):
+        viewmodel.start_merge(tmp_path / "réussite.pdf", overwrite=False)
+    qtbot.waitUntil(lambda: not viewmodel.is_busy, timeout=2_000)
+    assert service.calls == 2
+    assert viewmodel._thread is None
+    assert viewmodel._worker is None
+    viewmodel.shutdown()

@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-from PySide6.QtCore import QUrl, Signal
-from PySide6.QtGui import QCloseEvent, QDesktopServices
+from PySide6.QtCore import Qt, QUrl, Signal
+from PySide6.QtGui import QCloseEvent, QDesktopServices, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QComboBox,
     QFileDialog,
@@ -50,6 +50,11 @@ from sbbn_toolbox.constants import (
     PAGE_SIZE_ORIGINAL,
     PDF_FILES_FILTER,
     SAVE_PDF_TITLE,
+    SHORTCUT_ADD_TOOLTIP,
+    SHORTCUT_CANCEL_TOOLTIP,
+    SHORTCUT_REMOVE_TOOLTIP,
+    SHORTCUT_SAVE_TOOLTIP,
+    SHORTCUT_SELECT_ALL_TOOLTIP,
 )
 from sbbn_toolbox.domain.image_item import ImageItem
 from sbbn_toolbox.services.image_to_pdf_service import (
@@ -79,6 +84,7 @@ class ImageConverterPage(QWidget):
         super().__init__(parent)
         self.viewmodel = viewmodel or ImageConverterViewModel()
         self._last_result: Path | None = None
+        self._exported_signature: tuple[tuple[str, int], ...] | None = None
         layout = QVBoxLayout(self)
         layout.setContentsMargins(SPACING.xxxl, SPACING.xxl, SPACING.xxxl, SPACING.xxl)
         layout.setSpacing(SPACING.xl)
@@ -87,6 +93,7 @@ class ImageConverterPage(QWidget):
 
         self.drop_zone = DropZone(IMAGES_DROP_TITLE, IMAGES_DROP_DESCRIPTION, ADD_IMAGES)
         self.drop_zone.selection_requested.connect(self._choose_images)
+        self.drop_zone.setToolTip(SHORTCUT_ADD_TOOLTIP)
         self.drop_zone.files_dropped.connect(self._import_dropped_files)
         layout.addWidget(self.drop_zone)
         self.empty_state = EmptyState(IMAGES_EMPTY_TITLE, IMAGES_EMPTY_DESCRIPTION)
@@ -110,6 +117,7 @@ class ImageConverterPage(QWidget):
         self.cancel_button = ActionButton(CANCEL_CONVERSION, variant="secondary")
         self.cancel_button.setObjectName("cancelConversionButton")
         self.cancel_button.clicked.connect(self.viewmodel.cancel)
+        self.cancel_button.setToolTip(SHORTCUT_CANCEL_TOOLTIP)
         self.cancel_button.hide()
         actions.addWidget(self.cancel_button)
         self.create_button = ActionButton(CREATE_PDF)
@@ -133,6 +141,38 @@ class ImageConverterPage(QWidget):
         self.viewmodel.conversion_cancelled.connect(
             lambda: self.notification_requested.emit(CONVERSION_CANCELLED)
         )
+        self._create_shortcuts()
+
+    @property
+    def has_unexported_selection(self) -> bool:
+        return (
+            bool(self.viewmodel.items) and self._selection_signature() != self._exported_signature
+        )
+
+    def _create_shortcuts(self) -> None:
+        self._shortcut(QKeySequence.StandardKey.Open, self._choose_images)
+        self._shortcut(QKeySequence(Qt.Key.Key_Delete), self.grid.remove_selected)
+        self._shortcut(QKeySequence.StandardKey.SelectAll, self.grid.selectAll)
+        self._shortcut(QKeySequence.StandardKey.Save, self._save_if_available)
+        self._shortcut(QKeySequence(Qt.Key.Key_Escape), self._cancel_if_busy)
+        self.create_button.setToolTip(SHORTCUT_SAVE_TOOLTIP)
+        self.grid.setToolTip(f"{SHORTCUT_SELECT_ALL_TOOLTIP} · {SHORTCUT_REMOVE_TOOLTIP}")
+
+    def _shortcut(self, key: QKeySequence | QKeySequence.StandardKey, callback: object) -> None:
+        shortcut = QShortcut(key, self)
+        shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        shortcut.activated.connect(callback)
+
+    def _save_if_available(self) -> None:
+        if self.create_button.isEnabled():
+            self._choose_destination()
+
+    def _cancel_if_busy(self) -> None:
+        if self.viewmodel.is_busy:
+            self.viewmodel.cancel()
+
+    def _selection_signature(self) -> tuple[tuple[str, int], ...]:
+        return tuple((item.identifier, item.rotation) for item in self.viewmodel.items)
 
     def _options_panel(self) -> QFrame:
         panel = QFrame()
@@ -225,6 +265,7 @@ class ImageConverterPage(QWidget):
 
     def _conversion_succeeded(self, result: str) -> None:
         self._last_result = Path(result)
+        self._exported_signature = self._selection_signature()
         dialog = QMessageBox(self)
         dialog.setWindowTitle(CONVERSION_SUCCESS_TITLE)
         dialog.setText(CONVERSION_SUCCESS_MESSAGE.format(path=result))
@@ -235,5 +276,5 @@ class ImageConverterPage(QWidget):
             QDesktopServices.openUrl(QUrl.fromLocalFile(str(Path(result).parent)))
 
     def closeEvent(self, event: QCloseEvent) -> None:  # noqa: N802
-        self.viewmodel.cancel()
+        self.viewmodel.shutdown()
         super().closeEvent(event)

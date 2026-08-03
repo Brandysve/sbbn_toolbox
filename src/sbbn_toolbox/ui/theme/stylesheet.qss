@@ -176,7 +176,7 @@ QFrame#toast QLabel {
     font-weight: 600;
 }
 
-QLineEdit {
+QLineEdit, QComboBox, QSpinBox {
     min-height: 40px;
     color: @text-secondary;
     background: @background;
@@ -185,8 +185,35 @@ QLineEdit {
     padding: 0 12px;
 }
 
-QLineEdit:focus {
+QLineEdit:hover, QComboBox:hover, QSpinBox:hover {
+    border: 1px solid @primary;
+}
+
+QLineEdit:focus, QComboBox:focus, QSpinBox:focus {
     border: 2px solid @primary-hover;
+}
+
+QLineEdit:disabled, QComboBox:disabled, QSpinBox:disabled {
+    color: @disabled;
+    background: @surface;
+    border: 1px solid @border;
+}
+
+QCheckBox {
+    spacing: @spacing-small;
+    padding: @spacing-extra-small;
+}
+
+QCheckBox:hover {
+    color: @primary-hover;
+}
+
+QCheckBox:focus {
+    border: 2px solid @primary-hover;
+}
+
+QCheckBox:disabled {
+    color: @disabled;
 }
 
 QScrollArea {
@@ -207,4 +234,15 @@ QListWidget#pdfPageGrid::item {
 QListWidget#pdfPageGrid::item:selected {
     background: @primary-light;
     border: 2px solid @primary;
+}
+
+QListWidget#imageThumbnailGrid {
+    outline: none;
+    background: @background;
+}
+
+QListWidget#imageThumbnailGrid::item:selected {
+    background: @primary-light;
+    border: 2px solid @primary;
+    border-radius: @radius-large;
 }

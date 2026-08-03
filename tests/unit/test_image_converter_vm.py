@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 
 from PIL import Image
@@ -69,3 +70,75 @@ def test_conversion_runs_in_worker_thread(qtbot: QtBot, tmp_path: Path) -> None:
 
     assert service.worker_thread is not None
     assert service.worker_thread is not QThread.currentThread()
+
+
+def test_successive_conversion_error_then_success_releases_worker(
+    qtbot: QtBot,
+    tmp_path: Path,
+) -> None:
+    class FlakyService:
+        calls = 0
+
+        def convert(
+            self,
+            items: object,
+            destination: Path,
+            options: object,
+            **kwargs: object,
+        ) -> Path:
+            del items, options, kwargs
+            self.calls += 1
+            if self.calls == 1:
+                raise RuntimeError("échec contrôlé")
+            return destination
+
+    source = tmp_path / "successive.png"
+    create_png(source, (20, 10))
+    service = FlakyService()
+    viewmodel = ImageConverterViewModel(service=service)  # type: ignore[arg-type]
+    viewmodel.import_files([source])
+
+    with qtbot.waitSignal(viewmodel.conversion_failed, timeout=2_000):
+        viewmodel.start_conversion(tmp_path / "échec.pdf", ImagePdfOptions(), overwrite=False)
+    qtbot.waitUntil(lambda: not viewmodel.is_busy, timeout=2_000)
+    assert viewmodel._thread is None
+    assert viewmodel._worker is None
+
+    with qtbot.waitSignal(viewmodel.conversion_succeeded, timeout=2_000):
+        viewmodel.start_conversion(tmp_path / "réussite.pdf", ImagePdfOptions(), overwrite=False)
+    qtbot.waitUntil(lambda: not viewmodel.is_busy, timeout=2_000)
+    assert service.calls == 2
+    assert viewmodel._thread is None
+    assert viewmodel._worker is None
+
+
+def test_shutdown_cancels_conversion_and_releases_thread(
+    qtbot: QtBot,
+    tmp_path: Path,
+) -> None:
+    class SlowService:
+        def convert(
+            self,
+            items: object,
+            destination: Path,
+            options: object,
+            **kwargs: object,
+        ) -> Path:
+            del items, options
+            is_cancelled = kwargs["is_cancelled"]
+            while not is_cancelled():  # type: ignore[operator]
+                time.sleep(0.005)
+            return destination
+
+    source = tmp_path / "fermeture.png"
+    create_png(source, (20, 10))
+    viewmodel = ImageConverterViewModel(service=SlowService())  # type: ignore[arg-type]
+    viewmodel.import_files([source])
+    viewmodel.start_conversion(tmp_path / "sortie.pdf", ImagePdfOptions(), overwrite=False)
+    qtbot.waitUntil(lambda: viewmodel.is_busy, timeout=1_000)
+
+    viewmodel.shutdown()
+    qtbot.waitUntil(lambda: not viewmodel.is_busy, timeout=1_000)
+
+    assert viewmodel._thread is None
+    assert viewmodel._worker is None

@@ -132,7 +132,7 @@ def test_all_pages_remain_usable_when_resized(
         _assert_layout_items_do_not_overlap(layout)
 
 
-@pytest.mark.parametrize("scale_factor", (1.25, 1.5))
+@pytest.mark.parametrize("scale_factor", (1.0, 1.25, 1.5))
 def test_qt_layouts_with_simulated_scale_factor(scale_factor: float) -> None:
     script = """
 from PySide6.QtWidgets import QPushButton, QScrollArea

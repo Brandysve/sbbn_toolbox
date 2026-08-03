@@ -42,6 +42,7 @@ class ThumbnailCard(QFrame):
         details = QVBoxLayout()
         name = QLabel(item.display_name)
         name.setWordWrap(True)
+        name.setToolTip(item.display_name)
         details.addWidget(name)
         metadata = QLabel(f"{item.width} × {item.height} · {item.format} · {item.rotation}°")
         metadata.setProperty("role", "muted")

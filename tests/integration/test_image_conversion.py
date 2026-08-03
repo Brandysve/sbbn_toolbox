@@ -248,6 +248,33 @@ def test_simulated_error_and_missing_source_leave_no_residue(tmp_path: Path) -> 
     assert_no_partial_files(tmp_path)
 
 
+def test_source_deleted_during_conversion_leaves_no_result(tmp_path: Path) -> None:
+    first = tmp_path / "première.png"
+    second = tmp_path / "supprimée pendant conversion.png"
+    create_image(first, "PNG")
+    create_image(second, "PNG")
+    validator = ImageValidationService()
+    items = [validator.validate(first), validator.validate(second)]
+    destination = tmp_path / "incomplet.pdf"
+
+    def remove_next_source(current: int, total: int) -> None:
+        del total
+        if current == 1:
+            second.unlink()
+
+    with pytest.raises(ImageConversionError, match="inaccessible"):
+        ImageToPdfService().convert(
+            items,
+            destination,
+            ImagePdfOptions(),
+            progress=remove_next_source,
+        )
+
+    assert first.exists()
+    assert not destination.exists()
+    assert_no_partial_files(tmp_path)
+
+
 def test_read_only_destination_is_rejected_without_residue(tmp_path: Path) -> None:
     source = tmp_path / "image.png"
     create_image(source, "PNG")
@@ -284,4 +311,30 @@ def test_atomic_replace_failure_preserves_existing_result_and_cleans_partial(
         ImageToPdfService().convert([item], destination, ImagePdfOptions(), overwrite=True)
 
     assert destination.read_bytes() == previous_result
+    assert_no_partial_files(tmp_path)
+
+
+def test_long_unicode_paths_and_identical_names_from_different_folders(
+    tmp_path: Path,
+) -> None:
+    first_folder = tmp_path / ("dossier long avec espaces et accents é " * 3)
+    second_folder = tmp_path / "autre dossier 文件"
+    first_folder.mkdir()
+    second_folder.mkdir()
+    first = first_folder / "image identique.png"
+    second = second_folder / "image identique.png"
+    first_original = create_image(first, "PNG", (120, 80))
+    second_original = create_image(second, "PNG", (80, 120))
+    validator = ImageValidationService()
+    destination = tmp_path / "résultat Unicode final.pdf"
+
+    ImageToPdfService().convert(
+        [validator.validate(first), validator.validate(second)],
+        destination,
+        ImagePdfOptions(),
+    )
+
+    assert len(PdfReader(destination).pages) == 2
+    assert first.read_bytes() == first_original
+    assert second.read_bytes() == second_original
     assert_no_partial_files(tmp_path)

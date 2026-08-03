@@ -1,6 +1,7 @@
 """Liste de vignettes réordonnable par glisser-déposer."""
 
 from PySide6.QtCore import QModelIndex, Qt, Signal
+from PySide6.QtGui import QKeyEvent
 from PySide6.QtWidgets import QAbstractItemView, QListWidget, QListWidgetItem, QWidget
 
 from sbbn_toolbox.domain.image_item import ImageItem
@@ -19,7 +20,7 @@ class SortableThumbnailGrid(QListWidget):
         self.setObjectName("imageThumbnailGrid")
         self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
         self.setDefaultDropAction(Qt.DropAction.MoveAction)
-        self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.model().rowsMoved.connect(self._emit_order)
 
     def set_items(self, images: list[ImageItem]) -> None:
@@ -37,6 +38,20 @@ class SortableThumbnailGrid(QListWidget):
 
     def identifiers(self) -> list[str]:
         return [str(self.item(index).data(256)) for index in range(self.count())]
+
+    def selected_identifiers(self) -> list[str]:
+        return [str(item.data(256)) for item in self.selectedItems()]
+
+    def remove_selected(self) -> None:
+        for identifier in self.selected_identifiers():
+            self.remove_requested.emit(identifier)
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:  # noqa: N802
+        if event.key() == Qt.Key.Key_Delete:
+            self.remove_selected()
+            event.accept()
+            return
+        super().keyPressEvent(event)
 
     def _emit_order(
         self,

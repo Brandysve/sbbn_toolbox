@@ -32,6 +32,7 @@ class PdfThumbnailCard(QFrame):
         layout.addWidget(self.preview, alignment=Qt.AlignmentFlag.AlignCenter)
         source = QLabel(page.source_display_name)
         source.setWordWrap(True)
+        source.setToolTip(page.source_display_name)
         source.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(source)
         if page_count is None:

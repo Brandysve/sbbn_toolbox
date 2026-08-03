@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QMainWindow,
+    QMessageBox,
     QScrollArea,
     QStackedWidget,
     QVBoxLayout,
@@ -24,6 +25,8 @@ from sbbn_toolbox.constants import (
     NAV_IMAGES,
     NAV_PDF,
     NAV_SETTINGS,
+    QUIT_CONFIRM_MESSAGE,
+    QUIT_CONFIRM_TITLE,
 )
 from sbbn_toolbox.ui.pages.home_page import HomePage
 from sbbn_toolbox.ui.pages.image_converter_page import ImageConverterPage
@@ -171,6 +174,17 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event: QCloseEvent) -> None:  # noqa: N802
         """Attendre le nettoyage d'une conversion avant de fermer."""
+        if self.images_page.has_unexported_selection or self.pdf_page.has_unexported_selection:
+            answer = QMessageBox.question(
+                self,
+                QUIT_CONFIRM_TITLE,
+                QUIT_CONFIRM_MESSAGE,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
+            )
+            if answer is not QMessageBox.StandardButton.Yes:
+                event.ignore()
+                return
         self.images_page.viewmodel.shutdown()
         self.pdf_page.viewmodel.shutdown()
         super().closeEvent(event)

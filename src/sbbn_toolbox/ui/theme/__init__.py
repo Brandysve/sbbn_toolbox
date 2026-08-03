@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from sbbn_toolbox.ui.theme.tokens import COLORS, RADII
+from sbbn_toolbox.ui.theme.tokens import COLORS, RADII, SPACING
 
 
 def load_stylesheet() -> str:
@@ -25,6 +25,8 @@ def load_stylesheet() -> str:
         "@radius-small": f"{RADII.small}px",
         "@radius-medium": f"{RADII.medium}px",
         "@radius-large": f"{RADII.large}px",
+        "@spacing-extra-small": f"{SPACING.xs}px",
+        "@spacing-small": f"{SPACING.sm}px",
     }
     for token, value in sorted(replacements.items(), key=lambda item: len(item[0]), reverse=True):
         stylesheet = stylesheet.replace(token, value)

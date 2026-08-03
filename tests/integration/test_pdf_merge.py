@@ -123,6 +123,27 @@ def test_source_deleted_after_import_fails_without_residue(tmp_path: Path) -> No
     assert_no_partial(tmp_path)
 
 
+def test_source_deleted_during_merge_leaves_no_result(tmp_path: Path) -> None:
+    first = tmp_path / "premier.pdf"
+    second = tmp_path / "supprimé pendant fusion.pdf"
+    first_original = create_pdf(first, [(100, 100)])
+    create_pdf(second, [(200, 200)])
+    pages = [*load_pages(first), *load_pages(second)]
+    destination = tmp_path / "incomplet.pdf"
+
+    def remove_next_source(current: int, total: int) -> None:
+        del total
+        if current == 1:
+            second.unlink()
+
+    with pytest.raises(PdfMergeError, match="inaccessible"):
+        PdfMergeService().merge(pages, destination, progress=remove_next_source)
+
+    assert first.read_bytes() == first_original
+    assert not destination.exists()
+    assert_no_partial(tmp_path)
+
+
 def test_existing_destination_refused_then_accepted(tmp_path: Path) -> None:
     source = tmp_path / "source.pdf"
     create_pdf(source, [(100, 100)])
@@ -220,3 +241,24 @@ def test_preview_cache_is_bounded_and_released_by_source(tmp_path: Path) -> None
     service.clear_source(source.resolve())
     assert service.cache_size_bytes == 0
     assert service.cache_entry_count == 0
+
+
+def test_long_unicode_paths_and_identical_pdf_names_from_different_folders(
+    tmp_path: Path,
+) -> None:
+    first_folder = tmp_path / ("dossier PDF long avec accents é " * 3)
+    second_folder = tmp_path / "deuxième dossier 文件"
+    first_folder.mkdir()
+    second_folder.mkdir()
+    first = first_folder / "document identique.pdf"
+    second = second_folder / "document identique.pdf"
+    first_original = create_pdf(first, [(100, 200)])
+    second_original = create_pdf(second, [(300, 400)])
+    destination = tmp_path / "fusion Unicode finale.pdf"
+
+    PdfMergeService().merge([*load_pages(second), *load_pages(first)], destination)
+
+    assert output_sizes(destination) == [(300, 400), (100, 200)]
+    assert first.read_bytes() == first_original
+    assert second.read_bytes() == second_original
+    assert_no_partial(tmp_path)

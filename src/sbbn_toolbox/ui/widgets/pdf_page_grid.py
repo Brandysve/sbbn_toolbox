@@ -10,6 +10,7 @@ from PySide6.QtGui import (
     QDragLeaveEvent,
     QDragMoveEvent,
     QDropEvent,
+    QKeyEvent,
     QMouseEvent,
     QPainter,
     QPaintEvent,
@@ -30,6 +31,7 @@ class PdfPageGrid(QListWidget):
     order_changed = Signal(list)
     selection_changed = Signal(list)
     preview_requested = Signal(str, int)
+    remove_selected_requested = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -260,6 +262,13 @@ class PdfPageGrid(QListWidget):
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:  # noqa: N802
         super().mouseReleaseEvent(event)
         self._clear_drop_indicator()
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:  # noqa: N802
+        if event.key() == Qt.Key.Key_Delete:
+            self.remove_selected_requested.emit()
+            event.accept()
+            return
+        super().keyPressEvent(event)
 
     def _apply_drop_order(
         self,

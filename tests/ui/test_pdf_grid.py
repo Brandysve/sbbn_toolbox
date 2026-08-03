@@ -312,3 +312,63 @@ def test_page_checkbox_switches_dynamically_between_document_and_page_modes(
     assert not page.rotate_button.isHidden()
     assert not page.remove_button.isHidden()
     page.viewmodel.shutdown()
+
+
+def test_pdf_keyboard_shortcuts_select_and_remove_all(qtbot: QtBot) -> None:
+    page = PdfMergerPage()
+    qtbot.addWidget(page)
+    pages = make_document_pages()
+    page.viewmodel.pages = list(pages)
+    page._sync_pages(pages)
+    page.show()
+    page.grid.setFocus()
+
+    qtbot.keyClick(page.grid, Qt.Key.Key_A, Qt.KeyboardModifier.ControlModifier)
+
+    assert len(page.grid.selectedItems()) == 4
+    qtbot.keyClick(page.grid, Qt.Key.Key_Delete)
+    assert page.viewmodel.pages == []
+    page.viewmodel.shutdown()
+
+
+def test_long_pdf_name_is_available_as_tooltip(qtbot: QtBot) -> None:
+    grid = PdfPageGrid()
+    qtbot.addWidget(grid)
+    long_name = "rapport extrêmement long avec accents et caractères Unicode 文件.pdf"
+    page = PdfPageItem(
+        Path("/fixture") / long_name,
+        0,
+        1,
+        long_name,
+        100,
+        200,
+    )
+    grid.set_pages([page])
+    card = grid.itemWidget(grid.item(0))
+
+    assert isinstance(card, PdfThumbnailCard)
+    assert any(label.toolTip() == long_name for label in card.findChildren(QLabel))
+
+
+def test_pdf_actions_are_restored_after_long_operation(qtbot: QtBot) -> None:
+    page = PdfMergerPage()
+    qtbot.addWidget(page)
+    pages = make_document_pages()
+    page.viewmodel.pages = list(pages)
+    page._sync_pages(pages)
+    page.show()
+
+    page._set_busy(True)
+
+    assert not page.grid.isEnabled()
+    assert not page.merge_button.isEnabled()
+    assert page.cancel_button.isVisible()
+    assert page.progress.isVisible()
+
+    page._set_busy(False)
+
+    assert page.grid.isEnabled()
+    assert page.merge_button.isEnabled()
+    assert page.cancel_button.isHidden()
+    assert page.progress.isHidden()
+    page.viewmodel.shutdown()
