@@ -1,5 +1,7 @@
 """Grille globale de pages PDF avec sélection multiple et ordre déplaçable."""
 
+from pathlib import Path
+
 from PySide6.QtCore import QModelIndex, QPoint, QRect, Qt, QTimer, Signal
 from PySide6.QtGui import (
     QColor,
@@ -47,25 +49,72 @@ class PdfPageGrid(QListWidget):
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.setSpacing(8)
         self._requested: set[str] = set()
+        self._all_pages: list[PdfPageItem] = []
         self._pages_by_id: dict[str, PdfPageItem] = {}
+        self._display_pages_by_id: dict[str, PdfPageItem] = {}
+        self._document_mode = False
         self._drop_indicator: QRect | None = None
         self.model().rowsMoved.connect(self._emit_order)
         self.itemSelectionChanged.connect(self._emit_selection)
         self.verticalScrollBar().valueChanged.connect(self.request_visible_previews)
 
     def set_pages(self, pages: list[PdfPageItem]) -> None:
+        self._all_pages = list(pages)
         self.clear()
         self._requested.clear()
         self._pages_by_id = {page.identifier: page for page in pages}
-        for page in pages:
-            self.append_page(page)
+        self._display_pages_by_id.clear()
+        if self._document_mode:
+            for source_path in self._ordered_sources(pages):
+                source_pages = sorted(
+                    (page for page in pages if page.source_path == source_path),
+                    key=lambda page: page.source_page_index,
+                )
+                representative = source_pages[0]
+                self._append_display_item(
+                    str(source_path),
+                    representative,
+                    page_count=len(source_pages),
+                )
+        else:
+            for page in pages:
+                self._append_display_item(page.identifier, page)
         self._schedule_visible_request()
 
     def append_page(self, page: PdfPageItem) -> None:
+        self._all_pages.append(page)
         self._pages_by_id[page.identifier] = page
+        if not self._document_mode:
+            self._append_display_item(page.identifier, page)
+            return
+        document_identifier = str(page.source_path)
+        if document_identifier not in self._display_pages_by_id:
+            self._append_display_item(document_identifier, page, page_count=1)
+            return
+        for index in range(self.count()):
+            item = self.item(index)
+            if item.data(Qt.ItemDataRole.UserRole) == document_identifier:
+                card = self.itemWidget(item)
+                if isinstance(card, PdfThumbnailCard):
+                    page_count = sum(
+                        current.source_path == page.source_path for current in self._all_pages
+                    )
+                    card.set_page_count(page_count)
+                    item.setSizeHint(card.sizeHint())
+                return
+
+    def _append_display_item(
+        self,
+        display_identifier: str,
+        page: PdfPageItem,
+        *,
+        page_count: int | None = None,
+    ) -> None:
+        self._display_pages_by_id[display_identifier] = page
         item = QListWidgetItem()
-        item.setData(Qt.ItemDataRole.UserRole, page.identifier)
-        card = PdfThumbnailCard(page)
+        item.setData(Qt.ItemDataRole.UserRole, display_identifier)
+        item.setData(Qt.ItemDataRole.UserRole + 1, page.identifier)
+        card = PdfThumbnailCard(page, page_count=page_count)
         item.setSizeHint(card.sizeHint())
         self.addItem(item)
         self.setItemWidget(item, card)
@@ -74,24 +123,32 @@ class PdfPageGrid(QListWidget):
         self._schedule_visible_request()
 
     def update_page(self, page: PdfPageItem) -> None:
-        for index in range(self.count()):
-            item = self.item(index)
-            if item.data(Qt.ItemDataRole.UserRole) == page.identifier:
-                card = PdfThumbnailCard(page)
-                item.setSizeHint(card.sizeHint())
-                self.setItemWidget(item, card)
-                self._requested.discard(page.identifier)
-                break
-        self._schedule_visible_request()
+        pages = [
+            page if current.identifier == page.identifier else current
+            for current in self._all_pages
+        ]
+        self.set_pages(pages)
 
     def set_thumbnail(self, identifier: str, payload: bytes) -> None:
         for index in range(self.count()):
             item = self.item(index)
-            if item.data(Qt.ItemDataRole.UserRole) == identifier:
+            if item.data(Qt.ItemDataRole.UserRole + 1) == identifier:
                 card = self.itemWidget(item)
                 if isinstance(card, PdfThumbnailCard):
                     card.set_thumbnail(payload)
                 return
+
+    @property
+    def document_mode(self) -> bool:
+        return self._document_mode
+
+    def set_document_mode(self, enabled: bool) -> None:
+        if enabled == self._document_mode:
+            return
+        self._document_mode = enabled
+        pages = self._pages_in_document_order() if enabled else list(self._all_pages)
+        self.set_pages(pages)
+        self.order_changed.emit([page.identifier for page in pages])
 
     def identifiers(self) -> list[str]:
         return [
@@ -226,12 +283,33 @@ class PdfPageGrid(QListWidget):
         reordered = remaining[:insertion] + moving + remaining[insertion:]
         if reordered == current:
             return False
-        pages = [self._pages_by_id[identifier] for identifier in reordered]
+        if self._document_mode:
+            pages = self._pages_for_document_keys(reordered)
+        else:
+            pages = [self._pages_by_id[identifier] for identifier in reordered]
         self.set_pages(pages)
         self.clearSelection()
         self.setCurrentRow(-1)
-        self.order_changed.emit(reordered)
+        self.order_changed.emit([page.identifier for page in pages])
         return True
+
+    def _ordered_sources(self, pages: list[PdfPageItem]) -> list[Path]:
+        return list(dict.fromkeys(page.source_path for page in pages))
+
+    def _pages_in_document_order(self) -> list[PdfPageItem]:
+        return self._pages_for_document_keys(
+            [str(source_path) for source_path in self._ordered_sources(self._all_pages)]
+        )
+
+    def _pages_for_document_keys(self, keys: list[str]) -> list[PdfPageItem]:
+        by_source: dict[str, list[PdfPageItem]] = {}
+        for page in self._all_pages:
+            by_source.setdefault(str(page.source_path), []).append(page)
+        return [
+            page
+            for key in keys
+            for page in sorted(by_source[key], key=lambda item: item.source_page_index)
+        ]
 
     def _complete_drop(
         self,
@@ -292,7 +370,7 @@ class PdfPageGrid(QListWidget):
         self.viewport().repaint()
 
     def _request(self, index: int, priority: int) -> None:
-        identifier = str(self.item(index).data(Qt.ItemDataRole.UserRole))
+        identifier = str(self.item(index).data(Qt.ItemDataRole.UserRole + 1))
         if identifier not in self._requested:
             self._requested.add(identifier)
             self.preview_requested.emit(identifier, priority)
@@ -312,4 +390,8 @@ class PdfPageGrid(QListWidget):
         row: int,
     ) -> None:
         del parent, start, end, destination, row
-        self.order_changed.emit(self.identifiers())
+        if self._document_mode:
+            pages = self._pages_for_document_keys(self.identifiers())
+            self.order_changed.emit([page.identifier for page in pages])
+        else:
+            self.order_changed.emit(self.identifiers())

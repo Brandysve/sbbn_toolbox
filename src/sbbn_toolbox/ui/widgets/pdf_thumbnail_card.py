@@ -11,7 +11,13 @@ from sbbn_toolbox.ui.theme.tokens import SPACING
 class PdfThumbnailCard(QFrame):
     """Afficher la provenance, le numéro original et un aperçu en mémoire."""
 
-    def __init__(self, page: PdfPageItem, parent: QWidget | None = None) -> None:
+    def __init__(
+        self,
+        page: PdfPageItem,
+        parent: QWidget | None = None,
+        *,
+        page_count: int | None = None,
+    ) -> None:
         super().__init__(parent)
         self.page_identifier = page.identifier
         self.setProperty("card", True)
@@ -28,10 +34,19 @@ class PdfThumbnailCard(QFrame):
         source.setWordWrap(True)
         source.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(source)
-        number = QLabel(f"Page {page.display_page_number} · Rotation {page.rotation}°")
-        number.setProperty("role", "muted")
-        number.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(number)
+        if page_count is None:
+            details = f"Page {page.display_page_number} · Rotation {page.rotation}°"
+        else:
+            suffix = "page" if page_count == 1 else "pages"
+            details = f"{page_count} {suffix}"
+        self.details = QLabel(details)
+        self.details.setProperty("role", "muted")
+        self.details.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.details)
+
+    def set_page_count(self, page_count: int) -> None:
+        suffix = "page" if page_count == 1 else "pages"
+        self.details.setText(f"{page_count} {suffix}")
 
     def set_thumbnail(self, payload: bytes) -> None:
         pixmap = QPixmap()

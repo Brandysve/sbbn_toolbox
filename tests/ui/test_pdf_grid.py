@@ -3,10 +3,12 @@ from pathlib import Path
 from pypdf import PdfWriter
 from PySide6.QtCore import QModelIndex, Qt, QTimer
 from PySide6.QtGui import QDrag
+from PySide6.QtWidgets import QLabel
 from pytestqt.qtbot import QtBot
 
 from sbbn_toolbox.domain.pdf_page_item import PdfPageItem
 from sbbn_toolbox.services.preview_service import PreviewService
+from sbbn_toolbox.ui.pages.pdf_merger_page import PdfMergerPage
 from sbbn_toolbox.ui.widgets.pdf_page_grid import PdfPageGrid
 from sbbn_toolbox.ui.widgets.pdf_thumbnail_card import PdfThumbnailCard
 
@@ -23,6 +25,17 @@ def make_pages(count: int) -> list[PdfPageItem]:
             height=200,
         )
         for index in range(count)
+    ]
+
+
+def make_document_pages() -> list[PdfPageItem]:
+    first = Path("/fixture/pdf-1.pdf")
+    second = Path("/fixture/pdf-2.pdf")
+    return [
+        PdfPageItem(first, 1, 2, first.name, 100, 200),
+        PdfPageItem(second, 0, 1, second.name, 100, 200),
+        PdfPageItem(first, 0, 1, first.name, 100, 200),
+        PdfPageItem(second, 1, 2, second.name, 100, 200),
     ]
 
 
@@ -226,3 +239,76 @@ def test_real_pdf_thumbnail_is_displayed(qtbot: QtBot, tmp_path: Path) -> None:
     assert isinstance(card, PdfThumbnailCard)
     assert not card.preview.pixmap().isNull()
     assert card.preview.text() == ""
+
+
+def test_document_mode_groups_sources_and_restores_internal_page_order(
+    qtbot: QtBot,
+) -> None:
+    grid = PdfPageGrid()
+    qtbot.addWidget(grid)
+    pages = make_document_pages()
+    emitted: list[list[str]] = []
+    grid.order_changed.connect(emitted.append)
+    grid.set_pages(pages)
+
+    grid.set_document_mode(True)
+
+    assert grid.document_mode
+    assert grid.count() == 2
+    assert grid.identifiers() == [str(pages[0].source_path), str(pages[1].source_path)]
+    expected = [pages[2], pages[0], pages[1], pages[3]]
+    assert emitted[-1] == [page.identifier for page in expected]
+    first_card = grid.itemWidget(grid.item(0))
+    assert isinstance(first_card, PdfThumbnailCard)
+    assert first_card.page_identifier == pages[2].identifier
+    assert any(label.text() == "2 pages" for label in first_card.findChildren(QLabel))
+
+
+def test_document_mode_reorders_whole_pdf_blocks(qtbot: QtBot) -> None:
+    grid = PdfPageGrid()
+    qtbot.addWidget(grid)
+    pages = make_document_pages()
+    grid.set_pages(pages)
+    grid.set_document_mode(True)
+
+    with qtbot.waitSignal(grid.order_changed) as moved:
+        changed = grid._apply_drop_order(
+            [str(pages[0].source_path)],
+            str(pages[1].source_path),
+            True,
+        )
+
+    expected = [pages[1], pages[3], pages[2], pages[0]]
+    assert changed
+    assert moved.args == [[page.identifier for page in expected]]
+    assert grid.count() == 2
+
+    grid.set_document_mode(False)
+
+    assert grid.count() == 4
+    assert grid.identifiers() == [page.identifier for page in expected]
+
+
+def test_page_checkbox_switches_dynamically_between_document_and_page_modes(
+    qtbot: QtBot,
+) -> None:
+    page = PdfMergerPage()
+    qtbot.addWidget(page)
+    pages = make_document_pages()
+    page.viewmodel.pages = list(pages)
+    page._sync_pages(pages)
+
+    page.document_mode_checkbox.setChecked(True)
+
+    assert page.grid.document_mode
+    assert page.grid.count() == 2
+    assert page.rotate_button.isHidden()
+    assert page.remove_button.isHidden()
+
+    page.document_mode_checkbox.setChecked(False)
+
+    assert not page.grid.document_mode
+    assert page.grid.count() == 4
+    assert not page.rotate_button.isHidden()
+    assert not page.remove_button.isHidden()
+    page.viewmodel.shutdown()

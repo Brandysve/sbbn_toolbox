@@ -5,6 +5,7 @@ from pathlib import Path
 from PySide6.QtCore import QUrl, Signal
 from PySide6.QtGui import QCloseEvent, QDesktopServices
 from PySide6.QtWidgets import (
+    QCheckBox,
     QFileDialog,
     QHBoxLayout,
     QMessageBox,
@@ -38,6 +39,7 @@ from sbbn_toolbox.constants import (
     PDF_SUCCESS_TITLE,
     PDF_TITLE,
     REMOVE_SELECTED_PAGES,
+    REORDER_PDF_DOCUMENTS,
     ROTATE_SELECTED_PAGES,
 )
 from sbbn_toolbox.domain.pdf_page_item import PdfPageItem
@@ -82,6 +84,11 @@ class PdfMergerPage(QWidget):
         self.grid.order_changed.connect(self.viewmodel.reorder)
         self.grid.selection_changed.connect(self._selection_changed)
         self.grid.preview_requested.connect(self.viewmodel.request_thumbnail)
+        self.document_mode_checkbox = QCheckBox(REORDER_PDF_DOCUMENTS)
+        self.document_mode_checkbox.setObjectName("documentModeCheckbox")
+        self.document_mode_checkbox.toggled.connect(self._set_document_mode)
+        self.document_mode_checkbox.hide()
+        layout.addWidget(self.document_mode_checkbox)
         layout.addWidget(self.grid, stretch=1)
 
         actions = QVBoxLayout()
@@ -180,6 +187,7 @@ class PdfMergerPage(QWidget):
         self.grid.show()
         self.drop_zone.hide()
         self.add_more_button.show()
+        self.document_mode_checkbox.show()
         self.empty_state.hide()
 
     def _sync_pages(self, pages: list[PdfPageItem]) -> None:
@@ -187,6 +195,7 @@ class PdfMergerPage(QWidget):
         self.grid.setVisible(bool(pages))
         self.drop_zone.setVisible(not pages)
         self.add_more_button.setVisible(bool(pages))
+        self.document_mode_checkbox.setVisible(bool(pages))
         self.empty_state.setVisible(not pages)
         self.clear_button.setEnabled(bool(pages) and not self.viewmodel.is_busy)
         self.merge_button.setEnabled(bool(pages) and not self.viewmodel.is_busy)
@@ -201,6 +210,7 @@ class PdfMergerPage(QWidget):
     def _set_busy(self, busy: bool) -> None:
         self.drop_zone.setEnabled(not busy)
         self.add_more_button.setEnabled(not busy)
+        self.document_mode_checkbox.setEnabled(not busy)
         self.grid.setEnabled(not busy)
         self.clear_button.setEnabled(not busy and bool(self.viewmodel.pages))
         self.merge_button.setEnabled(not busy and bool(self.viewmodel.pages))
@@ -211,6 +221,12 @@ class PdfMergerPage(QWidget):
         if busy and self._operation_kind == "load":
             self.progress.setRange(0, 0)
             self.progress.setFormat(PDF_LOADING_PROGRESS)
+
+    def _set_document_mode(self, enabled: bool) -> None:
+        self.grid.set_document_mode(enabled)
+        self._selection_changed([])
+        self.rotate_button.setVisible(not enabled)
+        self.remove_button.setVisible(not enabled)
 
     def _load_progress(self, loaded: int) -> None:
         self.progress.setFormat(f"{PDF_LOADING_PROGRESS} {loaded}")
