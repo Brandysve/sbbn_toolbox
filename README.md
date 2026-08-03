@@ -3,9 +3,9 @@
 Application Windows locale et portable pour convertir des images en PDF et
 réorganiser puis fusionner des pages PDF.
 
-Le dépôt se trouve actuellement à la **Phase 3** : la configuration portable et
-le parcours complet Images vers PDF sont disponibles. La fusion et la
-réorganisation de PDF ne sont pas encore implémentées.
+Le dépôt se trouve actuellement à la **Phase 4** : les parcours Images vers PDF
+et Fusionner des PDF sont disponibles, avec configuration portable, aperçu et
+réorganisation des pages.
 
 ## Prérequis de développement
 

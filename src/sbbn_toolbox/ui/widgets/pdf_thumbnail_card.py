@@ -1,0 +1,44 @@
+"""Carte visuelle d'une page PDF, sans logique documentaire."""
+
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QPixmap
+from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout, QWidget
+
+from sbbn_toolbox.domain.pdf_page_item import PdfPageItem
+from sbbn_toolbox.ui.theme.tokens import SPACING
+
+
+class PdfThumbnailCard(QFrame):
+    """Afficher la provenance, le numéro original et un aperçu en mémoire."""
+
+    def __init__(self, page: PdfPageItem, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.page_identifier = page.identifier
+        self.setProperty("card", True)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(SPACING.md, SPACING.md, SPACING.md, SPACING.md)
+        layout.setSpacing(SPACING.sm)
+        self.preview = QLabel("…")
+        self.preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.preview.setFixedSize(180, 160)
+        layout.addWidget(self.preview, alignment=Qt.AlignmentFlag.AlignCenter)
+        source = QLabel(page.source_display_name)
+        source.setWordWrap(True)
+        source.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(source)
+        number = QLabel(f"Page {page.display_page_number} · Rotation {page.rotation}°")
+        number.setProperty("role", "muted")
+        number.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(number)
+
+    def set_thumbnail(self, payload: bytes) -> None:
+        pixmap = QPixmap()
+        if pixmap.loadFromData(payload, b"PNG"):
+            self.preview.setPixmap(
+                pixmap.scaled(
+                    self.preview.size(),
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
+                )
+            )
+            self.preview.setText("")

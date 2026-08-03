@@ -172,4 +172,5 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event: QCloseEvent) -> None:  # noqa: N802
         """Attendre le nettoyage d'une conversion avant de fermer."""
         self.images_page.viewmodel.shutdown()
+        self.pdf_page.viewmodel.shutdown()
         super().closeEvent(event)

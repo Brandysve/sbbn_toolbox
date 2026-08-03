@@ -49,5 +49,5 @@ strict = true
 files = ["src"]
 
 [[tool.mypy.overrides]]
-module = ["PySide6.*", "img2pdf"]
+module = ["PySide6.*", "fitz", "img2pdf"]
 ignore_missing_imports = true
