@@ -192,3 +192,19 @@ QLineEdit:focus {
 QScrollArea {
     border: none;
 }
+
+QListWidget#pdfPageGrid {
+    outline: none;
+    background: @background;
+}
+
+QListWidget#pdfPageGrid::item {
+    background: transparent;
+    border: 2px solid transparent;
+    border-radius: @radius-large;
+}
+
+QListWidget#pdfPageGrid::item:selected {
+    background: @primary-light;
+    border: 2px solid @primary;
+}

@@ -81,7 +81,7 @@ class PreviewService:
         except (fitz.FileDataError, RuntimeError, ValueError, OSError) as error:
             raise PdfLoadError("Le PDF est vide, corrompu ou inaccessible.") from error
 
-    def render_thumbnail(self, item: PdfPageItem, width: int = 180) -> bytes:
+    def render_thumbnail(self, item: PdfPageItem, width: int = 210) -> bytes:
         """Rendre une vignette PNG en mémoire, avec cache LRU borné."""
         key = (item.source_path, item.source_page_index, item.rotation, width)
         with self._lock:

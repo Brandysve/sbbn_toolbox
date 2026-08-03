@@ -1,10 +1,24 @@
 """Grille globale de pages PDF avec sélection multiple et ordre déplaçable."""
 
-from PySide6.QtCore import QModelIndex, Qt, QTimer, Signal
-from PySide6.QtGui import QResizeEvent, QShowEvent
+from PySide6.QtCore import QModelIndex, QPoint, QRect, Qt, QTimer, Signal
+from PySide6.QtGui import (
+    QColor,
+    QDrag,
+    QDragEnterEvent,
+    QDragLeaveEvent,
+    QDragMoveEvent,
+    QDropEvent,
+    QMouseEvent,
+    QPainter,
+    QPaintEvent,
+    QPen,
+    QResizeEvent,
+    QShowEvent,
+)
 from PySide6.QtWidgets import QAbstractItemView, QListWidget, QListWidgetItem, QWidget
 
 from sbbn_toolbox.domain.pdf_page_item import PdfPageItem
+from sbbn_toolbox.ui.theme.tokens import COLORS, SPACING
 from sbbn_toolbox.ui.widgets.pdf_thumbnail_card import PdfThumbnailCard
 
 
@@ -20,13 +34,21 @@ class PdfPageGrid(QListWidget):
         self.setObjectName("pdfPageGrid")
         self.setViewMode(QListWidget.ViewMode.IconMode)
         self.setResizeMode(QListWidget.ResizeMode.Adjust)
+        self.setMovement(QListWidget.Movement.Snap)
         self.setWrapping(True)
-        self.setGridSize(self.gridSize().expandedTo(self.minimumSizeHint()))
         self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
+        self.setDragEnabled(True)
+        self.setAcceptDrops(True)
+        # Le repère natif varie selon la plateforme et peut rester peint sous Linux.
+        self.setDropIndicatorShown(False)
+        self.setDragDropOverwriteMode(False)
         self.setDefaultDropAction(Qt.DropAction.MoveAction)
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.setSpacing(8)
         self._requested: set[str] = set()
+        self._pages_by_id: dict[str, PdfPageItem] = {}
+        self._drop_indicator: QRect | None = None
         self.model().rowsMoved.connect(self._emit_order)
         self.itemSelectionChanged.connect(self._emit_selection)
         self.verticalScrollBar().valueChanged.connect(self.request_visible_previews)
@@ -34,17 +56,21 @@ class PdfPageGrid(QListWidget):
     def set_pages(self, pages: list[PdfPageItem]) -> None:
         self.clear()
         self._requested.clear()
+        self._pages_by_id = {page.identifier: page for page in pages}
         for page in pages:
             self.append_page(page)
         self._schedule_visible_request()
 
     def append_page(self, page: PdfPageItem) -> None:
+        self._pages_by_id[page.identifier] = page
         item = QListWidgetItem()
         item.setData(Qt.ItemDataRole.UserRole, page.identifier)
         card = PdfThumbnailCard(page)
         item.setSizeHint(card.sizeHint())
         self.addItem(item)
         self.setItemWidget(item, card)
+        if self.count() == 1:
+            self._request(0, priority=2)
         self._schedule_visible_request()
 
     def update_page(self, page: PdfPageItem) -> None:
@@ -96,6 +122,174 @@ class PdfPageGrid(QListWidget):
     def resizeEvent(self, event: QResizeEvent) -> None:  # noqa: N802
         super().resizeEvent(event)
         self._schedule_visible_request()
+
+    def dragEnterEvent(self, event: QDragEnterEvent) -> None:  # noqa: N802
+        if event.source() is self:
+            event.setDropAction(Qt.DropAction.MoveAction)
+            event.accept()
+        else:
+            event.ignore()
+
+    def startDrag(self, supported_actions: Qt.DropAction) -> None:  # noqa: N802
+        """Lancer un drag sans pixmap ni suppression automatique par QListWidget."""
+        del supported_actions
+        indexes = self.selectedIndexes()
+        if not indexes:
+            return
+        mime_data = self.model().mimeData(indexes)
+        if mime_data is None:
+            return
+        drag = QDrag(self)
+        drag.setMimeData(mime_data)
+        try:
+            drag.exec(Qt.DropAction.MoveAction)
+        finally:
+            self._finish_drag_visuals()
+
+    def dragMoveEvent(self, event: QDragMoveEvent) -> None:  # noqa: N802
+        if event.source() is not self:
+            event.ignore()
+            return
+        self._update_drop_indicator(event.position().toPoint())
+        event.setDropAction(Qt.DropAction.MoveAction)
+        event.accept()
+
+    def dragLeaveEvent(self, event: QDragLeaveEvent) -> None:  # noqa: N802
+        self._clear_drop_indicator()
+        event.accept()
+
+    def paintEvent(self, event: QPaintEvent) -> None:  # noqa: N802
+        super().paintEvent(event)
+        if self._drop_indicator is None:
+            return
+        painter = QPainter(self.viewport())
+        painter.setPen(
+            QPen(
+                QColor(COLORS.primary),
+                SPACING.xs,
+                Qt.PenStyle.SolidLine,
+                Qt.PenCapStyle.RoundCap,
+            )
+        )
+        painter.drawLine(
+            self._drop_indicator.topLeft(),
+            self._drop_indicator.bottomLeft(),
+        )
+        painter.end()
+
+    def dropEvent(self, event: QDropEvent) -> None:  # noqa: N802
+        """Appliquer un ordre déterministe, indépendamment du style Qt de la plateforme."""
+        if event.source() is not self:
+            self._finish_drag_visuals()
+            event.ignore()
+            return
+        dragged = self.selected_identifiers()
+        if not dragged:
+            self._finish_drag_visuals()
+            event.accept()
+            return
+        position = event.position().toPoint()
+        target_identifier, insert_after = self._drop_location(position)
+        # Attendre la fin de la boucle native QDrag avant de reconstruire les widgets.
+        # Sous Linux, une reconstruction immédiate laisse parfois le pixmap du drag peint.
+        QTimer.singleShot(
+            0,
+            lambda: self._complete_drop(dragged, target_identifier, insert_after),
+        )
+        self._clear_drop_indicator()
+        event.setDropAction(Qt.DropAction.MoveAction)
+        event.accept()
+
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:  # noqa: N802
+        super().mouseReleaseEvent(event)
+        self._clear_drop_indicator()
+
+    def _apply_drop_order(
+        self,
+        dragged: list[str],
+        target_identifier: str | None,
+        insert_after: bool,
+    ) -> bool:
+        """Réordonner la vue et émettre l'ordre métier après un dépôt."""
+        current = self.identifiers()
+        dragged_set = set(dragged)
+        if not dragged_set or not dragged_set.issubset(current):
+            return False
+        remaining = [identifier for identifier in current if identifier not in dragged_set]
+        moving = [identifier for identifier in current if identifier in dragged_set]
+        if target_identifier is None:
+            insertion = len(remaining)
+        elif target_identifier in dragged_set:
+            return False
+        else:
+            insertion = remaining.index(target_identifier) + int(insert_after)
+        reordered = remaining[:insertion] + moving + remaining[insertion:]
+        if reordered == current:
+            return False
+        pages = [self._pages_by_id[identifier] for identifier in reordered]
+        self.set_pages(pages)
+        self.clearSelection()
+        self.setCurrentRow(-1)
+        self.order_changed.emit(reordered)
+        return True
+
+    def _complete_drop(
+        self,
+        dragged: list[str],
+        target_identifier: str | None,
+        insert_after: bool,
+    ) -> None:
+        """Reconstruire la grille une fois le pixmap natif du drag libéré."""
+        self._apply_drop_order(dragged, target_identifier, insert_after)
+        self._finish_drag_visuals()
+
+    def _drop_location(self, position: QPoint) -> tuple[str | None, bool]:
+        target_item = self.itemAt(position)
+        if target_item is None:
+            return None, True
+        target_rect = self.visualItemRect(target_item)
+        if abs(position.y() - target_rect.center().y()) < target_rect.height() // 2:
+            insert_after = position.x() > target_rect.center().x()
+        else:
+            insert_after = position.y() > target_rect.center().y()
+        return str(target_item.data(Qt.ItemDataRole.UserRole)), insert_after
+
+    def _update_drop_indicator(self, position: QPoint) -> None:
+        target_item = self.itemAt(position)
+        if target_item is None:
+            if not self.count():
+                self._clear_drop_indicator()
+                return
+            target_item = self.item(self.count() - 1)
+            insert_after = True
+        else:
+            _, insert_after = self._drop_location(position)
+        target_rect = self.visualItemRect(target_item)
+        x = target_rect.right() + SPACING.sm if insert_after else target_rect.left() - SPACING.sm
+        x = max(1, min(x, self.viewport().width() - SPACING.xs - 1))
+        indicator = QRect(x, target_rect.top(), SPACING.xs, target_rect.height())
+        if indicator != self._drop_indicator:
+            previous = self._drop_indicator
+            self._drop_indicator = indicator
+            if previous is not None:
+                self.viewport().update(previous.adjusted(-SPACING.sm, 0, SPACING.sm, 0))
+            self.viewport().update(indicator.adjusted(-SPACING.sm, 0, SPACING.sm, 0))
+
+    def _clear_drop_indicator(self) -> None:
+        if self._drop_indicator is not None:
+            previous = self._drop_indicator
+            self._drop_indicator = None
+            self.viewport().update(previous.adjusted(-SPACING.sm, 0, SPACING.sm, 0))
+
+    def _finish_drag_visuals(self) -> None:
+        self._clear_drop_indicator()
+        self.clearSelection()
+        self.setCurrentRow(-1)
+        self.viewport().update()
+        QTimer.singleShot(0, self._repaint_after_drag)
+
+    def _repaint_after_drag(self) -> None:
+        self.viewport().repaint()
 
     def _request(self, index: int, priority: int) -> None:
         identifier = str(self.item(index).data(Qt.ItemDataRole.UserRole))

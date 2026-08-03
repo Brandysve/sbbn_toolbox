@@ -159,8 +159,9 @@ for page in Page:
     buttons = page_widget.findChildren(QPushButton)
     assert buttons
     assert all(
-        button.isVisible()
-        or button.objectName() in {"cancelConversionButton", "cancelPdfOperationButton"}
+            button.isVisible()
+            or button.objectName()
+            in {"addMorePdfButton", "cancelConversionButton", "cancelPdfOperationButton"}
         for button in buttons
     )
 print("dpi-layout-ok")

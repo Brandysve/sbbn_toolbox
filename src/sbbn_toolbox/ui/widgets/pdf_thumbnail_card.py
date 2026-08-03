@@ -15,12 +15,14 @@ class PdfThumbnailCard(QFrame):
         super().__init__(parent)
         self.page_identifier = page.identifier
         self.setProperty("card", True)
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self.setMinimumWidth(234)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(SPACING.md, SPACING.md, SPACING.md, SPACING.md)
         layout.setSpacing(SPACING.sm)
         self.preview = QLabel("…")
         self.preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.preview.setFixedSize(180, 160)
+        self.preview.setFixedSize(210, 297)
         layout.addWidget(self.preview, alignment=Qt.AlignmentFlag.AlignCenter)
         source = QLabel(page.source_display_name)
         source.setWordWrap(True)
@@ -33,7 +35,7 @@ class PdfThumbnailCard(QFrame):
 
     def set_thumbnail(self, payload: bytes) -> None:
         pixmap = QPixmap()
-        if pixmap.loadFromData(payload, b"PNG"):
+        if pixmap.loadFromData(payload):
             self.preview.setPixmap(
                 pixmap.scaled(
                     self.preview.size(),

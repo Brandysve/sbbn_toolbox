@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
 )
 
 from sbbn_toolbox.constants import (
+    ADD_MORE_PDF,
     ADD_PDF,
     CANCEL_PDF_OPERATION,
     CLEAR_PDF_PAGES,
@@ -84,11 +85,19 @@ class PdfMergerPage(QWidget):
         layout.addWidget(self.grid, stretch=1)
 
         actions = QVBoxLayout()
+        document_actions = QHBoxLayout()
         selection_actions = QHBoxLayout()
+        self.add_more_button = ActionButton(ADD_MORE_PDF, variant="secondary")
+        self.add_more_button.setObjectName("addMorePdfButton")
+        self.add_more_button.clicked.connect(self._choose_pdfs)
+        self.add_more_button.hide()
+        document_actions.addWidget(self.add_more_button)
         self.clear_button = ActionButton(CLEAR_PDF_PAGES, variant="secondary")
         self.clear_button.setEnabled(False)
         self.clear_button.clicked.connect(self.viewmodel.clear)
-        selection_actions.addWidget(self.clear_button)
+        document_actions.addWidget(self.clear_button)
+        document_actions.addStretch()
+        actions.addLayout(document_actions)
         self.rotate_button = ActionButton(ROTATE_SELECTED_PAGES, variant="secondary")
         self.rotate_button.setEnabled(False)
         self.rotate_button.clicked.connect(lambda: self.viewmodel.rotate_selected(self._selected))
@@ -169,11 +178,15 @@ class PdfMergerPage(QWidget):
     def _page_added(self, page: PdfPageItem) -> None:
         self.grid.append_page(page)
         self.grid.show()
+        self.drop_zone.hide()
+        self.add_more_button.show()
         self.empty_state.hide()
 
     def _sync_pages(self, pages: list[PdfPageItem]) -> None:
         self.grid.set_pages(pages)
         self.grid.setVisible(bool(pages))
+        self.drop_zone.setVisible(not pages)
+        self.add_more_button.setVisible(bool(pages))
         self.empty_state.setVisible(not pages)
         self.clear_button.setEnabled(bool(pages) and not self.viewmodel.is_busy)
         self.merge_button.setEnabled(bool(pages) and not self.viewmodel.is_busy)
@@ -187,6 +200,7 @@ class PdfMergerPage(QWidget):
 
     def _set_busy(self, busy: bool) -> None:
         self.drop_zone.setEnabled(not busy)
+        self.add_more_button.setEnabled(not busy)
         self.grid.setEnabled(not busy)
         self.clear_button.setEnabled(not busy and bool(self.viewmodel.pages))
         self.merge_button.setEnabled(not busy and bool(self.viewmodel.pages))

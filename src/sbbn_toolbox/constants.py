@@ -58,6 +58,7 @@ PDF_DESCRIPTION = "Rassemblez et réorganisez toutes les pages dans un seul docu
 PDF_DROP_TITLE = "Déposez vos PDF ici"
 PDF_DROP_DESCRIPTION = "Vous pourrez ensuite réorganiser chaque page"
 ADD_PDF = "Ajouter des PDF"
+ADD_MORE_PDF = "Ajouter d’autres PDF"
 MERGE_PDF = "Fusionner les PDF"
 CLEAR_PDF_PAGES = "Vider les pages"
 ROTATE_SELECTED_PAGES = "Tourner de 90°"

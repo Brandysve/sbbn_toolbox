@@ -6,7 +6,7 @@ Créer une application Windows locale, portable et sans installation permettant 
 
 1. convertir une ou plusieurs images JPG, JPEG, PNG ou BMP en PDF ;
 2. fusionner plusieurs PDF ;
-3. afficher et réorganiser toutes les pages avant fusion par glisser-déposer ;
+3. choisir une réorganisation des PDF entiers ou de leurs pages avant fusion ;
 4. enregistrer directement le résultat à l'emplacement choisi ;
 5. ne conserver aucune copie des documents traités.
 
@@ -23,6 +23,9 @@ Le livrable utilisateur est une archive `SBBN-Toolbox-Windows-x64.zip`. Après d
 - Réorganisation des images avant conversion.
 - Rotation et retrait d'une image de la sélection.
 - Import de plusieurs PDF.
+- Choix entre un mode de réorganisation `Par document` et `Par page`.
+- En mode `Par document`, chaque PDF reste un bloc indivisible : sa première page sert
+  de vignette, son nombre de pages est affiché et ses pages conservent leur ordre original.
 - Affichage de chaque page sous forme de vignette.
 - Réorganisation globale des pages par glisser-déposer, indépendamment du fichier source.
 - Rotation et retrait d'une page de la fusion.
@@ -284,12 +287,16 @@ L'ordre du tableau de `PdfPageItem` constitue l'ordre exact du PDF final. Un dé
 
 1. Ajouter ou déposer plusieurs PDF.
 2. Charger leurs pages progressivement.
-3. Afficher une grille unique de pages avec le fichier source et le numéro d'origine.
-4. Réorganiser les pages par drag and drop.
-5. Tourner ou retirer une page.
-6. Cliquer sur `Fusionner les PDF`.
-7. Choisir le fichier final.
-8. Afficher la progression puis un message de réussite.
+3. Choisir le mode `Par document` ou `Par page`.
+4. En mode `Par document`, afficher une carte par PDF avec la vignette de sa première
+   page et réordonner les PDF comme des blocs indivisibles.
+5. En mode `Par page`, afficher une grille unique avec le fichier source et le numéro
+   d'origine, puis réorganiser, tourner ou retirer librement les pages.
+6. Lors d'un passage vers le mode `Par document`, demander confirmation si ce changement
+   doit regrouper des pages déjà entremêlées et restaurer leur ordre original par source.
+7. Cliquer sur `Fusionner les PDF`.
+8. Choisir le fichier final.
+9. Afficher la progression puis un message de réussite.
 
 ## 10. Design system SBBN
 
@@ -351,6 +358,7 @@ Les erreurs techniques détaillées vont dans le journal. L'interface affiche un
 ### Tests d'intégration
 
 - Images JPG + PNG + BMP vers un PDF lisible.
+- Fusion en mode document avec inversion de l'ordre de plusieurs PDF.
 - Fusion de trois PDF avec réorganisation inter-fichiers.
 - Rotation d'une page dans le résultat.
 - Annulation d'une opération et absence de résidu.
@@ -360,6 +368,8 @@ Les erreurs techniques détaillées vont dans le journal. L'interface affiche un
 ### Tests interface
 
 - Ajout par bouton et drag and drop.
+- Sélection des modes `Par document` et `Par page`.
+- Réorganisation de PDF entiers sans modifier l'ordre interne de leurs pages.
 - Réorganisation des vignettes.
 - Navigation clavier.
 - Désactivation des actions lorsqu'aucun fichier n'est présent.
@@ -438,13 +448,18 @@ Chaque phase doit se terminer par des tests exécutés et un commit local distin
 - Import de plusieurs PDF.
 - Extraction progressive des métadonnées de pages.
 - Rendu asynchrone et paresseux des vignettes.
+- Sélecteur de mode `Par document` / `Par page`.
+- Vue par document avec la première page en vignette, le nombre de pages et une
+  réorganisation des PDF sous forme de blocs indivisibles.
 - Grille globale réordonnable par drag and drop.
 - Rotation et retrait de pages.
-- Fusion selon l'ordre du modèle.
+- Fusion selon l'ordre du modèle actif : ordre des documents avec ordre interne original,
+  ou ordre global des pages.
 - Gestion des PDF corrompus et protégés.
-- Tests avec documents volumineux.
+- Tests des deux modes, du changement de mode et des documents volumineux.
 
-**Sortie :** le résultat correspond exactement à l'ordre et aux rotations visibles.
+**Sortie :** le résultat correspond exactement à l'ordre visible des documents ou des
+pages, selon le mode sélectionné, ainsi qu'aux rotations visibles.
 
 ### Phase 5 — Robustesse et finition UX
 
