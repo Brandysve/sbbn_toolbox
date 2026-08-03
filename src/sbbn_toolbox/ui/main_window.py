@@ -80,10 +80,10 @@ class MainWindow(QMainWindow):
             self.page_stack.addWidget(self._scrollable(page))
 
         self.toast = Toast()
-        content_layout.addWidget(
-            self.toast,
-            alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom,
-        )
+        toast_layout = QHBoxLayout()
+        toast_layout.setContentsMargins(SPACING.lg, 0, SPACING.lg, 0)
+        toast_layout.addWidget(self.toast, alignment=Qt.AlignmentFlag.AlignBottom)
+        content_layout.addLayout(toast_layout)
 
         self.home_page.images_requested.connect(lambda: self.navigate_to(Page.IMAGES))
         self.home_page.pdf_requested.connect(lambda: self.navigate_to(Page.PDF))

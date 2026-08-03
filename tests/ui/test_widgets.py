@@ -3,7 +3,9 @@ from PySide6.QtGui import QDropEvent
 from pytestqt.qtbot import QtBot
 
 from sbbn_toolbox.constants import PHASE_PLACEHOLDER_MESSAGE
+from sbbn_toolbox.ui.main_window import MainWindow
 from sbbn_toolbox.ui.pages.image_converter_page import ImageConverterPage
+from sbbn_toolbox.ui.theme.tokens import SPACING
 from sbbn_toolbox.ui.widgets.buttons import ActionButton
 from sbbn_toolbox.ui.widgets.drop_zone import DropZone
 from sbbn_toolbox.ui.widgets.toast import Toast
@@ -63,3 +65,19 @@ def test_toast_displays_message(qtbot: QtBot) -> None:
 
     assert toast.isVisible()
     assert toast.accessibleName() == "Information"
+
+
+def test_toast_uses_available_content_width(qtbot: QtBot) -> None:
+    window = MainWindow()
+    qtbot.addWidget(window)
+    window.show()
+
+    window.toast.show_message(
+        "Le dossier de données a été mis à jour.",
+        duration_ms=10_000,
+    )
+
+    parent = window.toast.parentWidget()
+    assert parent is not None
+    assert window.toast.x() == SPACING.lg
+    assert parent.contentsRect().right() - window.toast.geometry().right() == SPACING.lg
