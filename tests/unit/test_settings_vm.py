@@ -22,6 +22,7 @@ from sbbn_toolbox.viewmodels.settings_vm import SettingsViewModel
 def stable_release() -> dict[str, object]:
     return {
         "tag_name": "v1.1.0",
+        "html_url": "https://github.com/Brandysve/sbbn_toolbox/releases/tag/v1.1.0",
         "draft": False,
         "prerelease": False,
         "assets": [

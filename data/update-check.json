@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "lastAttemptAt": "2026-08-04T17:12:55.492813+00:00",
+  "checkedAt": "2026-08-04T17:12:55.492813+00:00",
+  "latestVersion": "1.0.0",
+  "archiveUrl": "https://github.com/Brandysve/sbbn_toolbox/releases/download/v1.0.0/SBBN-Toolbox-Windows-x64.zip",
+  "checksumUrl": "https://github.com/Brandysve/sbbn_toolbox/releases/download/v1.0.0/SBBN-Toolbox-Windows-x64.zip.sha256",
+  "archiveDigest": "9720fa4a8da5f645f65c7b4f59bbe1946425a8ac41ac7ea1e2921627d984c2db",
+  "releaseNotes": "## SBBN Toolbox 1.0.0\r\n\r\nPremière version stable de SBBN Toolbox.\r\n\r\n### Fonctionnalités\r\n\r\n- Conversion d’images JPG, JPEG, PNG et BMP en PDF\r\n- Réorganisation et rotation des images\r\n- Fusion de plusieurs PDF\r\n- Réorganisation, rotation et suppression des pages\r\n- Application Windows portable, sans installation\r\n- Données personnelles conservées séparément du programme\r\n\r\n### Installation\r\n\r\n1. Télécharger `SBBN-Toolbox-Windows-x64.zip`\r\n2. Extraire entièrement le ZIP\r\n3. Lancer `SBBN-Toolbox.exe`\r\n\r\nPython et les droits administrateur ne sont pas nécessaires."
+}

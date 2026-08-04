@@ -96,7 +96,7 @@ def release(*, digest: str | None = None) -> UpdateCheckResult:
         SemanticVersion.parse("1.2.0"),
         ReleaseAssets(ARCHIVE_URL, CHECKSUM_URL, digest),
         datetime(2026, 8, 4, tzinfo=UTC),
-        release_notes="Notes",
+        release_url="https://github.com/Brandysve/sbbn_toolbox/releases/tag/v1.2.0",
     )
 
 

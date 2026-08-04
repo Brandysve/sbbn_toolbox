@@ -17,6 +17,7 @@ from sbbn_toolbox.services.update_service import (
 def release_payload(version: str = "v1.1.0") -> dict[str, object]:
     return {
         "tag_name": version,
+        "html_url": f"https://github.com/Brandysve/sbbn_toolbox/releases/tag/{version}",
         "body": "Notes de la version stable.",
         "draft": False,
         "prerelease": False,
@@ -71,7 +72,7 @@ def test_stable_release_identifies_zip_and_checksum(tmp_path: Path) -> None:
     assert result.assets.archive_url.endswith(ARCHIVE_NAME)
     assert result.assets.checksum_url.endswith(CHECKSUM_NAME)
     assert result.assets.archive_digest == "a" * 64
-    assert result.release_notes == "Notes de la version stable."
+    assert result.release_url.endswith("/releases/tag/v1.1.0")
     assert not result.from_cache
     assert json.loads((tmp_path / "update-check.json").read_text(encoding="utf-8")) == {
         "schemaVersion": 1,
@@ -81,7 +82,7 @@ def test_stable_release_identifies_zip_and_checksum(tmp_path: Path) -> None:
         "archiveUrl": f"https://example.test/{ARCHIVE_NAME}",
         "checksumUrl": f"https://example.test/{CHECKSUM_NAME}",
         "archiveDigest": "a" * 64,
-        "releaseNotes": "Notes de la version stable.",
+        "releaseUrl": "https://github.com/Brandysve/sbbn_toolbox/releases/tag/v1.1.0",
     }
 
 
@@ -173,3 +174,19 @@ def test_failed_automatic_attempt_is_not_repeated_within_24_hours(tmp_path: Path
         service.check(tmp_path, now=now + timedelta(hours=23))
 
     assert calls == 1
+
+
+@pytest.mark.parametrize(
+    "url",
+    (
+        "http://github.com/Brandysve/sbbn_toolbox/releases/tag/v1.1.0",
+        "https://evil.example/Brandysve/sbbn_toolbox/releases/tag/v1.1.0",
+        "https://github.com/another/repository/releases/tag/v1.1.0",
+        "https://github.com/Brandysve/sbbn_toolbox/releases/tag/v9.9.9",
+    ),
+)
+def test_unexpected_release_page_url_is_rejected(tmp_path: Path, url: str) -> None:
+    payload = {**release_payload(), "html_url": url}
+
+    with pytest.raises(UpdateCheckError):
+        UpdateService("1.0.0", fetcher=lambda _url: payload).check(tmp_path)

@@ -10,6 +10,7 @@ from functools import total_ordering
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
+from urllib.parse import unquote, urlsplit
 from urllib.request import Request, urlopen
 
 from sbbn_toolbox.infrastructure.atomic_writer import atomic_write_json
@@ -27,6 +28,7 @@ SEMVER_PATTERN = re.compile(
     r"(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?"
     r"(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$"
 )
+RELEASE_PATH_PREFIX = f"/{REPOSITORY}/releases/tag/"
 
 
 class UpdateCheckError(RuntimeError):
@@ -99,7 +101,7 @@ class UpdateCheckResult:
     latest_version: SemanticVersion
     assets: ReleaseAssets
     checked_at: datetime
-    release_notes: str = ""
+    release_url: str = ""
     from_cache: bool = False
 
     @property
@@ -145,7 +147,7 @@ class UpdateService:
                     cached.result.latest_version,
                     cached.result.assets,
                     cached.result.checked_at,
-                    release_notes=cached.result.release_notes,
+                    release_url=cached.result.release_url,
                     from_cache=True,
                 )
 
@@ -171,12 +173,19 @@ class UpdateService:
         if payload.get("prerelease") is not False:
             raise ValueError("Les prereleases ne sont pas proposées automatiquement.")
         tag_name = payload.get("tag_name")
+        release_url = payload.get("html_url")
         assets_payload = payload.get("assets")
-        if not isinstance(tag_name, str) or not isinstance(assets_payload, list):
+        if (
+            not isinstance(tag_name, str)
+            or not isinstance(release_url, str)
+            or not isinstance(assets_payload, list)
+        ):
             raise ValueError("Release GitHub invalide.")
         latest_version = SemanticVersion.parse(tag_name)
         if latest_version.prerelease:
             raise ValueError("Les prereleases ne sont pas proposées automatiquement.")
+        if not is_expected_release_url(release_url, latest_version):
+            raise ValueError("URL de release GitHub invalide.")
 
         urls: dict[str, str] = {}
         archive_digest: str | None = None
@@ -198,16 +207,13 @@ class UpdateService:
                         archive_digest = digest.removeprefix("sha256:").lower()
         if set(urls) != {ARCHIVE_NAME, CHECKSUM_NAME}:
             raise ValueError("Les assets attendus sont absents.")
-        notes = payload.get("body", "")
-        if not isinstance(notes, str):
-            raise ValueError("Notes de release invalides.")
         assets = ReleaseAssets(urls[ARCHIVE_NAME], urls[CHECKSUM_NAME], archive_digest)
         return UpdateCheckResult(
             self.installed_version,
             latest_version,
             assets,
             checked_at,
-            release_notes=notes,
+            release_url=release_url,
         )
 
     def _read_cache(self, path: Path) -> _UpdateCache | None:
@@ -221,7 +227,7 @@ class UpdateService:
                 "archiveUrl",
                 "checksumUrl",
                 "archiveDigest",
-                "releaseNotes",
+                "releaseUrl",
             }:
                 return None
             if payload["schemaVersion"] != 1:
@@ -234,7 +240,7 @@ class UpdateService:
                 payload["latestVersion"],
                 payload["archiveUrl"],
                 payload["checksumUrl"],
-                payload["releaseNotes"],
+                payload["releaseUrl"],
             )
             if all(value is None for value in optional_values):
                 return _UpdateCache(last_attempt_at.astimezone(UTC), None)
@@ -247,11 +253,12 @@ class UpdateService:
             archive_url = payload["archiveUrl"]
             checksum_url = payload["checksumUrl"]
             archive_digest = payload["archiveDigest"]
-            release_notes = payload["releaseNotes"]
+            release_url = payload["releaseUrl"]
             if (
                 not isinstance(archive_url, str)
                 or not isinstance(checksum_url, str)
-                or not isinstance(release_notes, str)
+                or not isinstance(release_url, str)
+                or not is_expected_release_url(release_url, latest)
                 or (
                     archive_digest is not None
                     and (
@@ -268,7 +275,7 @@ class UpdateService:
                     latest,
                     ReleaseAssets(archive_url, checksum_url, archive_digest),
                     checked_at.astimezone(UTC),
-                    release_notes=release_notes,
+                    release_url=release_url,
                     from_cache=True,
                 ),
             )
@@ -285,7 +292,7 @@ class UpdateService:
             "archiveUrl": result.assets.archive_url,
             "checksumUrl": result.assets.checksum_url,
             "archiveDigest": result.assets.archive_digest,
-            "releaseNotes": result.release_notes,
+            "releaseUrl": result.release_url,
         }
 
     @staticmethod
@@ -302,7 +309,7 @@ class UpdateService:
             "archiveUrl": result.assets.archive_url if result else None,
             "checksumUrl": result.assets.checksum_url if result else None,
             "archiveDigest": result.assets.archive_digest if result else None,
-            "releaseNotes": result.release_notes if result else None,
+            "releaseUrl": result.release_url if result else None,
         }
 
     @staticmethod
@@ -320,3 +327,28 @@ class UpdateService:
         if len(content) > MAX_RESPONSE_BYTES:
             raise ValueError("Réponse GitHub trop volumineuse.")
         return json.loads(content)
+
+
+def is_expected_release_url(url: str, expected_version: SemanticVersion) -> bool:
+    """Valider une page HTTPS de release stable du dépôt public attendu."""
+    parsed = urlsplit(url)
+    try:
+        port = parsed.port
+    except ValueError:
+        return False
+    if (
+        parsed.scheme != "https"
+        or parsed.hostname != "github.com"
+        or port not in {None, 443}
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.query
+        or parsed.fragment
+        or not parsed.path.startswith(RELEASE_PATH_PREFIX)
+    ):
+        return False
+    tag_name = unquote(parsed.path.removeprefix(RELEASE_PATH_PREFIX))
+    try:
+        return SemanticVersion.parse(tag_name) == expected_version
+    except ValueError:
+        return False

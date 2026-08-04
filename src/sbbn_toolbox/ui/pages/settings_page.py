@@ -2,7 +2,8 @@
 
 from pathlib import Path
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import QUrl, Signal
+from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QFileDialog,
     QFrame,
@@ -46,18 +47,16 @@ from sbbn_toolbox.constants import (
     UPDATE_DOWNLOAD_FAILED,
     UPDATE_DOWNLOAD_PROGRESS_KNOWN,
     UPDATE_DOWNLOAD_PROGRESS_UNKNOWN,
-    UPDATE_NO_RELEASE_NOTES,
     UPDATE_READY,
-    UPDATE_RELEASE_NOTES,
     UPDATE_STATUS_IDLE,
     UPDATE_UP_TO_DATE,
     USE_DEFAULT_DATA,
     USE_NEW_LOCATION,
-    VERSION_SECTION_DESCRIPTION,
     VERSION_SECTION_TITLE,
+    VIEW_WHATS_NEW,
 )
 from sbbn_toolbox.services.config_service import ConfigurationError
-from sbbn_toolbox.services.update_service import UpdateCheckResult
+from sbbn_toolbox.services.update_service import UpdateCheckResult, is_expected_release_url
 from sbbn_toolbox.ui.theme.tokens import SPACING
 from sbbn_toolbox.ui.widgets.buttons import ActionButton
 from sbbn_toolbox.ui.widgets.page_header import PageHeader
@@ -77,6 +76,7 @@ class SettingsPage(QWidget):
         super().__init__(parent)
         self.viewmodel = viewmodel
         self._selected_path: Path | None = None
+        self._available_release: UpdateCheckResult | None = None
         layout = QVBoxLayout(self)
         layout.setContentsMargins(SPACING.xxxl, SPACING.xxl, SPACING.xxxl, SPACING.xxl)
         layout.setSpacing(SPACING.xl)
@@ -164,6 +164,7 @@ class SettingsPage(QWidget):
 
     def _version_card(self) -> QFrame:
         card = QFrame()
+        card.setObjectName("versionUpdateCard")
         card.setProperty("card", True)
         layout = QVBoxLayout(card)
         layout.setContentsMargins(SPACING.xl, SPACING.xl, SPACING.xl, SPACING.xl)
@@ -172,10 +173,6 @@ class SettingsPage(QWidget):
         title = QLabel(VERSION_SECTION_TITLE)
         title.setProperty("role", "sectionTitle")
         layout.addWidget(title)
-        description = QLabel(VERSION_SECTION_DESCRIPTION)
-        description.setProperty("role", "muted")
-        description.setWordWrap(True)
-        layout.addWidget(description)
         installed_version = self.viewmodel.installed_version if self.viewmodel else "—"
         self.version_label = QLabel(INSTALLED_VERSION.format(version=installed_version))
         self.version_label.setObjectName("installedVersionLabel")
@@ -185,13 +182,6 @@ class SettingsPage(QWidget):
         self.update_status.setProperty("role", "muted")
         self.update_status.setWordWrap(True)
         layout.addWidget(self.update_status)
-        notes_title = QLabel(UPDATE_RELEASE_NOTES)
-        notes_title.setProperty("role", "muted")
-        layout.addWidget(notes_title)
-        self.release_notes = QLabel(UPDATE_NO_RELEASE_NOTES)
-        self.release_notes.setObjectName("releaseNotesLabel")
-        self.release_notes.setWordWrap(True)
-        layout.addWidget(self.release_notes)
         self.update_button = ActionButton(CHECK_FOR_UPDATES, variant="secondary")
         self.update_button.setObjectName("checkForUpdatesButton")
         self.update_button.setEnabled(self.viewmodel is not None)
@@ -202,6 +192,11 @@ class SettingsPage(QWidget):
         self.download_button.setEnabled(False)
         self.download_button.clicked.connect(self._download_update)
         layout.addWidget(self.download_button)
+        self.whats_new_button = ActionButton(VIEW_WHATS_NEW, variant="secondary")
+        self.whats_new_button.setObjectName("viewWhatsNewButton")
+        self.whats_new_button.setVisible(False)
+        self.whats_new_button.clicked.connect(self._open_release_page)
+        layout.addWidget(self.whats_new_button)
         self.cancel_download_button = ActionButton(
             CANCEL_UPDATE_DOWNLOAD,
             variant="secondary",
@@ -301,12 +296,15 @@ class SettingsPage(QWidget):
 
     def _update_succeeded(self, result: UpdateCheckResult) -> None:
         if result.update_available:
+            self._available_release = result
             self.update_status.setText(UPDATE_AVAILABLE.format(version=result.latest_version))
             self.download_button.setEnabled(True)
+            self.whats_new_button.setVisible(True)
         else:
+            self._available_release = None
             self.update_status.setText(UPDATE_UP_TO_DATE)
             self.download_button.setEnabled(False)
-        self.release_notes.setText(result.release_notes or UPDATE_NO_RELEASE_NOTES)
+            self.whats_new_button.setVisible(False)
 
     def _update_failed(self, manual: bool) -> None:
         if manual:
@@ -320,6 +318,14 @@ class SettingsPage(QWidget):
     def _download_update(self) -> None:
         if self.viewmodel is not None:
             self.viewmodel.download_update()
+
+    def _open_release_page(self) -> None:
+        release = self._available_release
+        if release is not None and is_expected_release_url(
+            release.release_url,
+            release.latest_version,
+        ):
+            QDesktopServices.openUrl(QUrl(release.release_url))
 
     def _cancel_download(self) -> None:
         if self.viewmodel is not None:

@@ -171,8 +171,9 @@ for page in Page:
             in {
                 "addMorePdfButton",
                 "cancelConversionButton",
-                "cancelPdfOperationButton",
-                "cancelUpdateDownloadButton",
+                    "cancelPdfOperationButton",
+                    "cancelUpdateDownloadButton",
+                    "viewWhatsNewButton",
             }
         for button in buttons
     )
