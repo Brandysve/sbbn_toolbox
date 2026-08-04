@@ -10,25 +10,22 @@ if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) {
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $buildRoot = Join-Path $repoRoot ".build\windows"
-$runtimePathFile = Join-Path $buildRoot "runtime-dist.path"
-$launcher = Join-Path $buildRoot "launcher\SBBN-Toolbox.exe"
+$distPathFile = Join-Path $buildRoot "pyinstaller-dist.path"
 $packageRoot = Join-Path $buildRoot "package"
 $portableRoot = Join-Path $packageRoot "SBBN-Toolbox"
-$runtimeTarget = Join-Path $portableRoot "runtime"
 $artifactsRoot = Join-Path $repoRoot "artifacts"
 $zipPath = Join-Path $artifactsRoot "SBBN-Toolbox-Windows-x64.zip"
 $checksumPath = "$zipPath.sha256"
 $readmeSource = Join-Path $repoRoot "packaging\README.txt"
 
-if (-not (Test-Path -LiteralPath $runtimePathFile) -or
-    -not (Test-Path -LiteralPath $launcher) -or
+if (-not (Test-Path -LiteralPath $distPathFile) -or
     -not (Test-Path -LiteralPath $readmeSource)) {
     throw "Exécutez d’abord scripts\build_windows.ps1."
 }
-$runtimeSource = [IO.File]::ReadAllText($runtimePathFile).Trim()
-if (-not (Test-Path -LiteralPath $runtimeSource) -or
-    -not (Test-Path -LiteralPath (Join-Path $runtimeSource "SBBN-Toolbox-runtime.exe"))) {
-    throw "Le runtime Nuitka indiqué par le build est invalide."
+$distSource = [IO.File]::ReadAllText($distPathFile).Trim()
+if (-not (Test-Path -LiteralPath (Join-Path $distSource "SBBN-Toolbox.exe")) -or
+    -not (Test-Path -LiteralPath (Join-Path $distSource "runtime"))) {
+    throw "Le dossier onedir PyInstaller indiqué par le build est invalide."
 }
 
 if (Test-Path -LiteralPath $packageRoot) {
@@ -40,9 +37,8 @@ if (Test-Path -LiteralPath $packageRoot) {
     }
     Remove-Item -LiteralPath $resolvedPackage -Recurse -Force
 }
-New-Item -ItemType Directory -Force -Path $runtimeTarget, $artifactsRoot | Out-Null
-Copy-Item -LiteralPath $launcher -Destination (Join-Path $portableRoot "SBBN-Toolbox.exe")
-Copy-Item -Path (Join-Path $runtimeSource "*") -Destination $runtimeTarget -Recurse
+New-Item -ItemType Directory -Force -Path $portableRoot, $artifactsRoot | Out-Null
+Copy-Item -Path (Join-Path $distSource "*") -Destination $portableRoot -Recurse
 Copy-Item -LiteralPath $readmeSource -Destination (Join-Path $portableRoot "README.txt")
 [IO.File]::WriteAllText(
     (Join-Path $portableRoot "config.json"),

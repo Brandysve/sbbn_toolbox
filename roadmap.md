@@ -58,7 +58,7 @@ Le livrable utilisateur est une archive `SBBN-Toolbox-Windows-x64.zip`. Après d
 | Tests | pytest + pytest-qt | Tests métier et interface |
 | Qualité | Ruff | Lint et formatage |
 | Typage | mypy | Vérification statique ciblée |
-| Packaging | Nuitka via `pyside6-deploy` | Dossier Windows autonome |
+| Packaging | PyInstaller en mode `onedir` | Dossier Windows autonome |
 
 Règle : les bibliothèques de traitement ne doivent jamais dépendre directement de l'interface. Les services métier doivent être testables séparément.
 
@@ -149,8 +149,11 @@ sbbn-toolbox/
 │   ├── package_zip.ps1
 │   └── smoke_test.ps1
 └── packaging/
-    ├── deployment.spec
-    └── version_info.json
+    ├── README.txt
+    ├── requirements-windows.lock
+    ├── version_info.json
+    ├── windows_entrypoint.py
+    └── windows_version_info.txt
 ```
 
 ## 6. Distribution portable et données
@@ -479,7 +482,7 @@ pages, selon le mode sélectionné, ainsi qu'aux rotations visibles.
 
 **Objectif :** produire le ZIP final.
 
-- Compiler avec `pyside6-deploy`/Nuitka en mode dossier autonome.
+- Construire avec PyInstaller en mode `onedir` et `windowed`.
 - Inclure uniquement les plugins Qt nécessaires.
 - Ajouter icône, version et informations d'exécutable.
 - Générer `README.txt` utilisateur.

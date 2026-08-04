@@ -25,7 +25,7 @@ function Remove-ControlledDirectory {
     if (-not (Test-Path -LiteralPath $Path)) { return }
     $resolvedPath = (Resolve-Path -LiteralPath $Path).Path
     $resolvedRoot = (Resolve-Path -LiteralPath $BuildRoot).Path
-    $allowedNames = @("nuitka", "launcher")
+    $allowedNames = @("pyinstaller")
     if (-not $resolvedPath.StartsWith($resolvedRoot + [IO.Path]::DirectorySeparatorChar) -or
         (Split-Path -Leaf $resolvedPath) -notin $allowedNames) {
         throw "Refus de nettoyer un dossier non contrôlé : $resolvedPath"
@@ -43,9 +43,10 @@ if (-not [Environment]::Is64BitOperatingSystem -or -not [Environment]::Is64BitPr
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $buildRoot = Join-Path $repoRoot ".build\windows"
 $venvRoot = Join-Path $buildRoot "venv"
-$nuitkaRoot = Join-Path $buildRoot "nuitka"
-$launcherRoot = Join-Path $buildRoot "launcher"
-$runtimePathFile = Join-Path $buildRoot "runtime-dist.path"
+$pyinstallerRoot = Join-Path $buildRoot "pyinstaller"
+$distRoot = Join-Path $pyinstallerRoot "dist"
+$workRoot = Join-Path $pyinstallerRoot "work"
+$distPathFile = Join-Path $buildRoot "pyinstaller-dist.path"
 New-Item -ItemType Directory -Force -Path $buildRoot | Out-Null
 
 Push-Location $repoRoot
@@ -71,32 +72,34 @@ try {
         Invoke-Checked $python @("-m", "pytest", "-q")
     }
 
-    # Ces deux dossiers sont les seules sorties de compilation remplacées.
-    # L'environnement dédié est conservé et réutilisé, y compris avec -Clean.
-    Remove-ControlledDirectory -Path $nuitkaRoot -BuildRoot $buildRoot
-    Remove-ControlledDirectory -Path $launcherRoot -BuildRoot $buildRoot
-    Remove-Item -LiteralPath $runtimePathFile -Force -ErrorAction SilentlyContinue
-    New-Item -ItemType Directory -Force -Path $nuitkaRoot, $launcherRoot | Out-Null
+    # Ce dossier est la seule sortie de packaging remplacée. L'environnement
+    # dédié est conservé et réutilisé entre les builds.
+    Remove-ControlledDirectory -Path $pyinstallerRoot -BuildRoot $buildRoot
+    Remove-Item -LiteralPath $distPathFile -Force -ErrorAction SilentlyContinue
+    New-Item -ItemType Directory -Force -Path $pyinstallerRoot | Out-Null
 
-    $nuitkaArguments = @(
-        "-m", "nuitka",
-        "--mode=standalone",
-        "--enable-plugin=pyside6",
-        "--include-qt-plugins=platforms,styles,imageformats",
-        "--windows-console-mode=disable",
-        "--msvc=latest",
-        "--deployment",
-        "--output-dir=$nuitkaRoot",
-        "--output-filename=SBBN-Toolbox-runtime.exe",
-        "--company-name=SBBN",
-        "--product-name=SBBN Toolbox",
-        "--file-description=SBBN Toolbox",
-        "--file-version=1.0.0.0",
-        "--product-version=1.0.0.0",
-        "--copyright=SBBN",
-        "--include-data-file=src/sbbn_toolbox/ui/theme/stylesheet.qss=sbbn_toolbox/ui/theme/stylesheet.qss",
-        "--nofollow-import-to=tests,pytest,pytestqt,mypy,ruff",
-        "--report=$nuitkaRoot\compilation-report.xml",
+    $pyinstallerArguments = @(
+        "-m", "PyInstaller",
+        "--noconfirm",
+        "--clean",
+        "--onedir",
+        "--windowed",
+        "--name=SBBN-Toolbox",
+        "--contents-directory=runtime",
+        "--version-file=packaging\windows_version_info.txt",
+        "--distpath=$distRoot",
+        "--workpath=$workRoot",
+        "--specpath=$pyinstallerRoot",
+        "--add-data=src\sbbn_toolbox\ui\theme\stylesheet.qss;sbbn_toolbox\ui\theme",
+        "--hidden-import=fitz",
+        "--hidden-import=pymupdf",
+        "--hidden-import=pypdf",
+        "--hidden-import=img2pdf",
+        "--hidden-import=PIL",
+        "--exclude-module=pytest",
+        "--exclude-module=pytestqt",
+        "--exclude-module=mypy",
+        "--exclude-module=ruff",
         "packaging\windows_entrypoint.py"
     )
 
@@ -106,7 +109,7 @@ try {
             Add-Type -AssemblyName System.Drawing
             $icon = New-Object System.Drawing.Icon($iconPath)
             $icon.Dispose()
-            $nuitkaArguments += "--windows-icon-from-ico=$iconPath"
+            $pyinstallerArguments += "--icon=$iconPath"
         }
         catch {
             Write-Warning "L’icône disponible n’est pas un ICO Windows valide ; elle est ignorée."
@@ -116,42 +119,18 @@ try {
         Write-Warning "Aucune icône ICO SBBN valide n’est disponible ; aucun logo n’est inventé."
     }
 
-    Invoke-Checked $python $nuitkaArguments
-    $runtimeCandidates = @(
-        Get-ChildItem -LiteralPath $nuitkaRoot -Directory -Filter "*.dist" |
-            Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName "SBBN-Toolbox-runtime.exe") }
-    )
-    if ($runtimeCandidates.Count -ne 1) {
-        throw "Le dossier autonome Nuitka est introuvable ou ambigu."
+    Invoke-Checked $python $pyinstallerArguments
+    $applicationDist = Join-Path $distRoot "SBBN-Toolbox"
+    if (-not (Test-Path -LiteralPath (Join-Path $applicationDist "SBBN-Toolbox.exe")) -or
+        -not (Test-Path -LiteralPath (Join-Path $applicationDist "runtime"))) {
+        throw "Le dossier onedir PyInstaller est incomplet."
     }
     [IO.File]::WriteAllText(
-        $runtimePathFile,
-        $runtimeCandidates[0].FullName,
+        $distPathFile,
+        $applicationDist,
         (New-Object Text.UTF8Encoding($false))
     )
-
-    $launcherOutput = Join-Path $launcherRoot "SBBN-Toolbox.exe"
-    $compilerOptions = "/optimize+ /platform:x64 /target:winexe"
-    if (Test-Path -LiteralPath $iconPath) {
-        try {
-            $validatedIcon = New-Object System.Drawing.Icon($iconPath)
-            $validatedIcon.Dispose()
-            $compilerOptions += " /win32icon:`"$iconPath`""
-        }
-        catch { }
-    }
-    $launcherCompilation = @{
-        Path = (Join-Path $repoRoot "packaging\launcher.cs")
-        OutputAssembly = $launcherOutput
-        OutputType = "WindowsApplication"
-        CompilerOptions = $compilerOptions
-    }
-    Add-Type @launcherCompilation
-    if (-not (Test-Path -LiteralPath $launcherOutput)) {
-        throw "La compilation du lanceur portable a échoué."
-    }
-
-    Write-Host "Compilation Windows terminée. Runtime : $($runtimeCandidates[0].FullName)"
+    Write-Host "Packaging Windows PyInstaller terminé : $applicationDist"
 }
 finally {
     Pop-Location

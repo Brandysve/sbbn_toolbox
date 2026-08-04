@@ -10,9 +10,6 @@ build/
 dist/
 artifacts/
 .build/
-*.dist/
-*.build/
-*.onefile-build/
 *.egg-info/
 .idea/
 .vscode/

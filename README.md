@@ -63,8 +63,9 @@ Remove-Item Env:QT_SCALE_FACTOR
 
 ## Packaging Windows x64
 
-Le packaging doit être exécuté depuis Windows, avec CPython 3.12 x64 et les outils
-de compilation Visual Studio 2022. WSL n'est pas pris en charge pour cette étape.
+Le packaging doit être exécuté depuis Windows avec CPython 3.12 x64. PyInstaller
+produit un dossier autonome : Python et Visual Studio Build Tools ne sont pas requis
+sur le PC utilisateur. WSL n'est pas pris en charge pour cette étape.
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass

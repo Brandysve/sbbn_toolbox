@@ -32,8 +32,8 @@ try {
     Expand-Archive -LiteralPath $ZipPath -DestinationPath $smokeRoot
     $portableRoot = Join-Path $smokeRoot "SBBN-Toolbox"
     $executable = Join-Path $portableRoot "SBBN-Toolbox.exe"
-    $runtimeExecutable = Join-Path $portableRoot "runtime\SBBN-Toolbox-runtime.exe"
-    foreach ($required in @($executable, $runtimeExecutable, (Join-Path $portableRoot "config.json"), (Join-Path $portableRoot "README.txt"))) {
+    $runtimeDirectory = Join-Path $portableRoot "runtime"
+    foreach ($required in @($executable, $runtimeDirectory, (Join-Path $portableRoot "config.json"), (Join-Path $portableRoot "README.txt"))) {
         if (-not (Test-Path -LiteralPath $required)) {
             throw "Fichier portable requis absent : $required"
         }
@@ -54,9 +54,9 @@ try {
         $networkObserved = $false
         while (-not $process.HasExited -and [DateTime]::UtcNow -lt $deadline) {
             if (Get-Command Get-NetTCPConnection -ErrorAction SilentlyContinue) {
-                $runtimeProcesses = @(Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -eq $runtimeExecutable })
-                foreach ($runtimeProcess in $runtimeProcesses) {
-                    if (Get-NetTCPConnection -OwningProcess $runtimeProcess.ProcessId -ErrorAction SilentlyContinue) {
+                $applicationProcesses = @(Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -eq $executable })
+                foreach ($applicationProcess in $applicationProcesses) {
+                    if (Get-NetTCPConnection -OwningProcess $applicationProcess.ProcessId -ErrorAction SilentlyContinue) {
                         $networkObserved = $true
                     }
                 }

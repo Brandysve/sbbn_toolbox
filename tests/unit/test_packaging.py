@@ -21,7 +21,9 @@ def test_windows_packaging_metadata_and_locked_compiler() -> None:
         "console": False,
         "requiresAdministrator": False,
     }
-    assert "Nuitka==" in build_lock
+    assert "pyinstaller==6.16.0" in build_lock
+    assert "pyinstaller-hooks-contrib==2025.8" in build_lock
+    assert "nuitka" not in build_lock.lower()
     assert ">=" not in build_lock
 
 
@@ -33,13 +35,21 @@ def test_packaging_scripts_enforce_windows_and_expected_archive() -> None:
 
     assert all("Win32NT" in script for script in scripts.values())
     assert '$ErrorActionPreference = "Stop"' in scripts["build_windows.ps1"]
-    assert "--mode=standalone" in scripts["build_windows.ps1"]
-    assert "--windows-console-mode=disable" in scripts["build_windows.ps1"]
+    assert '"--onedir"' in scripts["build_windows.ps1"]
+    assert '"--windowed"' in scripts["build_windows.ps1"]
+    assert '"--contents-directory=runtime"' in scripts["build_windows.ps1"]
+    assert '"--name=SBBN-Toolbox"' in scripts["build_windows.ps1"]
+    assert '"--version-file=packaging\\windows_version_info.txt"' in scripts["build_windows.ps1"]
+    assert "stylesheet.qss;sbbn_toolbox\\ui\\theme" in scripts["build_windows.ps1"]
+    for dependency in ("fitz", "pymupdf", "pypdf", "img2pdf", "PIL"):
+        assert f'"--hidden-import={dependency}"' in scripts["build_windows.ps1"]
+    assert '"--onefile"' not in scripts["build_windows.ps1"]
     assert '"-3.12"' in scripts["build_windows.ps1"]
     assert "SBBN-Toolbox-Windows-x64.zip" in scripts["package_zip.ps1"]
     assert "Get-FileHash" in scripts["package_zip.ps1"]
     assert "SBBN-Toolbox.exe" in scripts["package_zip.ps1"]
     assert '"runtime"' in scripts["package_zip.ps1"]
+    assert "SBBN-Toolbox-runtime.exe" not in scripts["smoke_test.ps1"]
     assert "--smoke-test" in scripts["smoke_test.ps1"]
     assert "Get-NetTCPConnection" in scripts["smoke_test.ps1"]
 

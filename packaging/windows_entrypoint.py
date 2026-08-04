@@ -1,4 +1,4 @@
-"""Point d’entrée exclusivement destiné à la compilation Windows Nuitka."""
+"""Point d’entrée exclusivement destiné au packaging Windows PyInstaller."""
 
 from sbbn_toolbox.__main__ import main
 
