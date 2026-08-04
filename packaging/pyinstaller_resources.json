@@ -1,0 +1,8 @@
+{
+  "data": [
+    {
+      "source": "src/sbbn_toolbox/ui/theme/stylesheet.qss",
+      "destination": "sbbn_toolbox/ui/theme"
+    }
+  ]
+}

@@ -2,6 +2,8 @@ import ast
 import json
 from pathlib import Path
 
+import pytest
+
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -35,12 +37,27 @@ def test_packaging_scripts_enforce_windows_and_expected_archive() -> None:
 
     assert all("Win32NT" in script for script in scripts.values())
     assert '$ErrorActionPreference = "Stop"' in scripts["build_windows.ps1"]
+    assert (
+        '$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot ".."))' in scripts["build_windows.ps1"]
+    )
+    for source_path in (
+        "requirementsPath",
+        "windowsRequirementsPath",
+        "resourceManifestPath",
+        "entrypointPath",
+        "versionInfoPath",
+    ):
+        assert f"${source_path} = Join-Path $repoRoot" in scripts["build_windows.ps1"]
     assert '"--onedir"' in scripts["build_windows.ps1"]
     assert '"--windowed"' in scripts["build_windows.ps1"]
     assert '"--contents-directory=runtime"' in scripts["build_windows.ps1"]
     assert '"--name=SBBN-Toolbox"' in scripts["build_windows.ps1"]
-    assert '"--version-file=packaging\\windows_version_info.txt"' in scripts["build_windows.ps1"]
-    assert "stylesheet.qss;sbbn_toolbox\\ui\\theme" in scripts["build_windows.ps1"]
+    assert '"--version-file=$versionInfoPath"' in scripts["build_windows.ps1"]
+    assert '"--add-data=$sourcePath;$($resource.destination)"' in scripts["build_windows.ps1"]
+    assert (
+        "Invoke-Checked $python ($pyinstallerArguments + $entrypointPath)"
+        in scripts["build_windows.ps1"]
+    )
     for dependency in ("fitz", "pymupdf", "pypdf", "img2pdf", "PIL"):
         assert f'"--hidden-import={dependency}"' in scripts["build_windows.ps1"]
     assert '"--onefile"' not in scripts["build_windows.ps1"]
@@ -52,6 +69,29 @@ def test_packaging_scripts_enforce_windows_and_expected_archive() -> None:
     assert "SBBN-Toolbox-runtime.exe" not in scripts["smoke_test.ps1"]
     assert "--smoke-test" in scripts["smoke_test.ps1"]
     assert "Get-NetTCPConnection" in scripts["smoke_test.ps1"]
+
+
+def test_pyinstaller_resources_resolve_from_repository_outside_working_directory(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    manifest = json.loads(
+        (REPOSITORY_ROOT / "packaging" / "pyinstaller_resources.json").read_text(encoding="utf-8")
+    )
+
+    resolved = [
+        ((REPOSITORY_ROOT / item["source"]).resolve(), item["destination"])
+        for item in manifest["data"]
+    ]
+
+    assert resolved == [
+        (
+            (REPOSITORY_ROOT / "src/sbbn_toolbox/ui/theme/stylesheet.qss").resolve(),
+            "sbbn_toolbox/ui/theme",
+        )
+    ]
+    assert all(source.is_file() for source, _ in resolved)
 
 
 def test_user_readme_contains_required_portable_guidance() -> None:

@@ -150,6 +150,7 @@ sbbn-toolbox/
 │   └── smoke_test.ps1
 └── packaging/
     ├── README.txt
+    ├── pyinstaller_resources.json
     ├── requirements-windows.lock
     ├── version_info.json
     ├── windows_entrypoint.py
