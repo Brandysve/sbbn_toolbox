@@ -1,0 +1,541 @@
+PS C:\Dev\sbbn_toolbox> Set-ExecutionPolicy -Scope Process Bypass
+PS C:\Dev\sbbn_toolbox> .\scripts\build_windows.ps1
+Collecting PySide6==6.9.1 (from -r requirements.lock (line 3))
+  Downloading PySide6-6.9.1-cp39-abi3-win_amd64.whl.metadata (5.4 kB)
+Collecting PyMuPDF==1.26.3 (from -r requirements.lock (line 4))
+  Downloading pymupdf-1.26.3-cp39-abi3-win_amd64.whl.metadata (3.4 kB)
+Collecting pypdf==6.0.0 (from -r requirements.lock (line 5))
+  Downloading pypdf-6.0.0-py3-none-any.whl.metadata (7.1 kB)
+Collecting img2pdf==0.6.1 (from -r requirements.lock (line 6))
+  Downloading img2pdf-0.6.1.tar.gz (106 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 106.5/106.5 kB 770.2 kB/s eta 0:00:00
+  Installing build dependencies ... done
+  Getting requirements to build wheel ... done
+  Preparing metadata (pyproject.toml) ... done
+Collecting Pillow==11.3.0 (from -r requirements.lock (line 7))
+  Downloading pillow-11.3.0-cp312-cp312-win_amd64.whl.metadata (9.2 kB)
+Collecting hatchling==1.27.0 (from -r requirements.lock (line 8))
+  Downloading hatchling-1.27.0-py3-none-any.whl.metadata (3.8 kB)
+Collecting mypy==1.17.0 (from -r requirements.lock (line 9))
+  Downloading mypy-1.17.0-cp312-cp312-win_amd64.whl.metadata (2.2 kB)
+Collecting pytest==8.4.1 (from -r requirements.lock (line 10))
+  Downloading pytest-8.4.1-py3-none-any.whl.metadata (7.7 kB)
+Collecting pytest-qt==4.5.0 (from -r requirements.lock (line 11))
+  Downloading pytest_qt-4.5.0-py3-none-any.whl.metadata (7.9 kB)
+Collecting ruff==0.12.7 (from -r requirements.lock (line 12))
+  Downloading ruff-0.12.7-py3-none-win_amd64.whl.metadata (26 kB)
+Collecting shiboken6==6.9.1 (from PySide6==6.9.1->-r requirements.lock (line 3))
+  Downloading shiboken6-6.9.1-cp39-abi3-win_amd64.whl.metadata (2.5 kB)
+Collecting PySide6-Essentials==6.9.1 (from PySide6==6.9.1->-r requirements.lock (line 3))
+  Downloading PySide6_Essentials-6.9.1-cp39-abi3-win_amd64.whl.metadata (3.8 kB)
+Collecting PySide6-Addons==6.9.1 (from PySide6==6.9.1->-r requirements.lock (line 3))
+  Downloading PySide6_Addons-6.9.1-cp39-abi3-win_amd64.whl.metadata (4.1 kB)
+Collecting pikepdf (from img2pdf==0.6.1->-r requirements.lock (line 6))
+  Downloading pikepdf-10.11.0-cp312-cp312-win_amd64.whl.metadata (10 kB)
+Collecting packaging>=24.2 (from hatchling==1.27.0->-r requirements.lock (line 8))
+  Downloading packaging-26.2-py3-none-any.whl.metadata (3.5 kB)
+Collecting pathspec>=0.10.1 (from hatchling==1.27.0->-r requirements.lock (line 8))
+  Downloading pathspec-1.1.1-py3-none-any.whl.metadata (14 kB)
+Collecting pluggy>=1.0.0 (from hatchling==1.27.0->-r requirements.lock (line 8))
+  Downloading pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+Collecting trove-classifiers (from hatchling==1.27.0->-r requirements.lock (line 8))
+  Downloading trove_classifiers-2026.6.1.19-py3-none-any.whl.metadata (2.3 kB)
+Collecting typing_extensions>=4.6.0 (from mypy==1.17.0->-r requirements.lock (line 9))
+  Downloading typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+Collecting mypy_extensions>=1.0.0 (from mypy==1.17.0->-r requirements.lock (line 9))
+  Downloading mypy_extensions-1.1.0-py3-none-any.whl.metadata (1.1 kB)
+Collecting colorama>=0.4 (from pytest==8.4.1->-r requirements.lock (line 10))
+  Downloading colorama-0.4.6-py2.py3-none-any.whl.metadata (17 kB)
+Collecting iniconfig>=1 (from pytest==8.4.1->-r requirements.lock (line 10))
+  Downloading iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)
+Collecting pygments>=2.7.2 (from pytest==8.4.1->-r requirements.lock (line 10))
+  Downloading pygments-2.20.0-py3-none-any.whl.metadata (2.5 kB)
+Collecting lxml>=4.8 (from pikepdf->img2pdf==0.6.1->-r requirements.lock (line 6))
+  Downloading lxml-6.1.1-cp312-cp312-win_amd64.whl.metadata (3.6 kB)
+Downloading PySide6-6.9.1-cp39-abi3-win_amd64.whl (564 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 564.6/564.6 kB 12.1 MB/s eta 0:00:00
+Downloading pymupdf-1.26.3-cp39-abi3-win_amd64.whl (18.7 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 18.7/18.7 MB 50.1 MB/s eta 0:00:00
+Downloading pypdf-6.0.0-py3-none-any.whl (310 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 310.5/310.5 kB 18.8 MB/s eta 0:00:00
+Downloading pillow-11.3.0-cp312-cp312-win_amd64.whl (7.0 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.0/7.0 MB 64.0 MB/s eta 0:00:00
+Downloading hatchling-1.27.0-py3-none-any.whl (75 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 75.8/75.8 kB ? eta 0:00:00
+Downloading mypy-1.17.0-cp312-cp312-win_amd64.whl (9.6 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 9.6/9.6 MB 11.4 MB/s eta 0:00:00
+Downloading pytest-8.4.1-py3-none-any.whl (365 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 365.5/365.5 kB ? eta 0:00:00
+Downloading pytest_qt-4.5.0-py3-none-any.whl (37 kB)
+Downloading ruff-0.12.7-py3-none-win_amd64.whl (12.9 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.9/12.9 MB 50.4 MB/s eta 0:00:00
+Downloading PySide6_Addons-6.9.1-cp39-abi3-win_amd64.whl (143.2 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 143.2/143.2 MB 7.3 MB/s eta 0:00:00
+Downloading PySide6_Essentials-6.9.1-cp39-abi3-win_amd64.whl (72.4 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 72.4/72.4 MB 7.5 MB/s eta 0:00:00
+Downloading shiboken6-6.9.1-cp39-abi3-win_amd64.whl (1.2 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 10.4 MB/s eta 0:00:00
+Downloading colorama-0.4.6-py2.py3-none-any.whl (25 kB)
+Downloading iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+Downloading mypy_extensions-1.1.0-py3-none-any.whl (5.0 kB)
+Downloading packaging-26.2-py3-none-any.whl (100 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100.2/100.2 kB ? eta 0:00:00
+Downloading pathspec-1.1.1-py3-none-any.whl (57 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 57.3/57.3 kB 2.9 MB/s eta 0:00:00
+Downloading pluggy-1.6.0-py3-none-any.whl (20 kB)
+Downloading pygments-2.20.0-py3-none-any.whl (1.2 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 76.3 MB/s eta 0:00:00
+Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 45.6/45.6 kB ? eta 0:00:00
+Downloading pikepdf-10.11.0-cp312-cp312-win_amd64.whl (3.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.3/3.3 MB 70.6 MB/s eta 0:00:00
+Downloading trove_classifiers-2026.6.1.19-py3-none-any.whl (14 kB)
+Downloading lxml-6.1.1-cp312-cp312-win_amd64.whl (4.0 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.0/4.0 MB 64.3 MB/s eta 0:00:00
+Building wheels for collected packages: img2pdf
+  Building wheel for img2pdf (pyproject.toml) ... done
+  Created wheel for img2pdf: filename=img2pdf-0.6.1-py3-none-any.whl size=51162 sha256=b5200ff804a020235510e69742a0e03fbfb7f4ba61b398122530272c0b0009de
+  Stored in directory: c:\users\brandon\appdata\local\pip\cache\wheels\a5\05\56\c05447973db749cd2178b8f95e36f007f0af5f5dce2c6197a5
+Successfully built img2pdf
+Installing collected packages: trove-classifiers, typing_extensions, shiboken6, ruff, pypdf, PyMuPDF, pygments, pluggy, Pillow, pathspec, packaging, mypy_extensions, lxml, iniconfig, colorama, pytest, PySide6-Essentials, pikepdf, mypy, hatchling, pytest-qt, PySide6-Addons, img2pdf, PySide6
+Successfully installed Pillow-11.3.0 PyMuPDF-1.26.3 PySide6-6.9.1 PySide6-Addons-6.9.1 PySide6-Essentials-6.9.1 colorama-0.4.6 hatchling-1.27.0 img2pdf-0.6.1 iniconfig-2.3.0 lxml-6.1.1 mypy-1.17.0 mypy_extensions-1.1.0 packaging-26.2 pathspec-1.1.1 pikepdf-10.11.0 pluggy-1.6.0 pygments-2.20.0 pypdf-6.0.0 pytest-8.4.1 pytest-qt-4.5.0 ruff-0.12.7 shiboken6-6.9.1 trove-classifiers-2026.6.1.19 typing_extensions-4.16.0
+
+[notice] A new release of pip is available: 24.0 -> 26.2
+[notice] To update, run: C:\Dev\sbbn_toolbox\.build\windows\venv\Scripts\python.exe -m pip install --upgrade pip
+Collecting Nuitka==4.1.3 (from -r packaging\requirements-windows.lock (line 2))
+  Downloading nuitka-4.1.3.tar.gz (4.6 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.6/4.6 MB 24.2 MB/s eta 0:00:00
+  Installing build dependencies ... done
+  Getting requirements to build wheel ... done
+  Preparing metadata (pyproject.toml) ... done
+Collecting ordered-set==4.1.0 (from -r packaging\requirements-windows.lock (line 3))
+  Downloading ordered_set-4.1.0-py3-none-any.whl.metadata (5.3 kB)
+Collecting zstandard==0.23.0 (from -r packaging\requirements-windows.lock (line 4))
+  Downloading zstandard-0.23.0-cp312-cp312-win_amd64.whl.metadata (3.0 kB)
+Downloading ordered_set-4.1.0-py3-none-any.whl (7.6 kB)
+Downloading zstandard-0.23.0-cp312-cp312-win_amd64.whl (495 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 495.6/495.6 kB 32.4 MB/s eta 0:00:00
+Building wheels for collected packages: Nuitka
+  Building wheel for Nuitka (pyproject.toml) ... done
+  Created wheel for Nuitka: filename=nuitka-4.1.3-cp312-cp312-win_amd64.whl size=4456998 sha256=9ed426a99ee0dfe095891d16283f5e79bdaa32f409649828058b7640abd7c095
+  Stored in directory: c:\users\brandon\appdata\local\pip\cache\wheels\7f\26\3c\4290a1e704b00c5e64061e7b045d360ed94d277ba58cb6e31b
+Successfully built Nuitka
+Installing collected packages: Nuitka, zstandard, ordered-set
+Successfully installed Nuitka-4.1.3 ordered-set-4.1.0 zstandard-0.23.0
+
+[notice] A new release of pip is available: 24.0 -> 26.2
+[notice] To update, run: C:\Dev\sbbn_toolbox\.build\windows\venv\Scripts\python.exe -m pip install --upgrade pip
+Obtaining file:///C:/Dev/sbbn_toolbox
+  Installing build dependencies ... done
+  Checking if build backend supports build_editable ... done
+  Getting requirements to build editable ... done
+  Installing backend dependencies ... done
+  Preparing editable metadata (pyproject.toml) ... done
+Building wheels for collected packages: sbbn-toolbox
+  Building editable for sbbn-toolbox (pyproject.toml) ... done
+  Created wheel for sbbn-toolbox: filename=sbbn_toolbox-1.0.0-py3-none-any.whl size=2275 sha256=ca5430ab58d2067817817f1bfec845bdd91dcd4a23661bfdd4e396421458c88a
+  Stored in directory: C:\Users\Brandon\AppData\Local\Temp\pip-ephem-wheel-cache-mcqg9agt\wheels\65\a6\3e\e272774a7ad4b809e0e18f0cfc1c4709938ef1cb0f5172378b
+Successfully built sbbn-toolbox
+Installing collected packages: sbbn-toolbox
+Successfully installed sbbn-toolbox-1.0.0
+
+[notice] A new release of pip is available: 24.0 -> 26.2
+[notice] To update, run: C:\Dev\sbbn_toolbox\.build\windows\venv\Scripts\python.exe -m pip install --upgrade pip
+All checks passed!
+57 files already formatted
+Success: no issues found in 43 source files
+...................F.............F......FFF................................................................      [100%]
+====================================================== FAILURES =======================================================
+_________________________ test_long_unicode_paths_and_identical_names_from_different_folders __________________________
+
+tmp_path = WindowsPath('C:/Users/Brandon/AppData/Local/Temp/pytest-of-Brandon/pytest-0/test_long_unicode_paths_and_id0')
+
+    def test_long_unicode_paths_and_identical_names_from_different_folders(
+        tmp_path: Path,
+    ) -> None:
+        first_folder = tmp_path / ("dossier long avec espaces et accents é " * 3)
+        second_folder = tmp_path / "autre dossier 文件"
+        first_folder.mkdir()
+        second_folder.mkdir()
+        first = first_folder / "image identique.png"
+        second = second_folder / "image identique.png"
+>       first_original = create_image(first, "PNG", (120, 80))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\integration\test_image_conversion.py:326:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\integration\test_image_conversion.py:26: in create_image
+    Image.new("RGB", size, (90, 30, 180)).save(path, format=image_format)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <PIL.Image.Image image mode=RGB size=120x80 at 0x205FBDB38F0>
+fp = WindowsPath('C:/Users/Brandon/AppData/Local/Temp/pytest-of-Brandon/pytest-0/test_long_unicode_paths_and_id0/dossier lo...paces et accents é dossier long avec espaces et accents é dossier long avec espaces et accents é /image identique.png')
+format = 'PNG', params = {}
+filename = 'C:\\Users\\Brandon\\AppData\\Local\\Temp\\pytest-of-Brandon\\pytest-0\\test_long_unicode_paths_and_id0\\dossier long ...paces et accents é dossier long avec espaces et accents é dossier long avec espaces et accents é \\image identique.png'
+open_fp = True, filename_ext = '.png', ext = '.png'
+ImageFile = <module 'PIL.ImageFile' from 'C:\\Dev\\sbbn_toolbox\\.build\\windows\\venv\\Lib\\site-packages\\PIL\\ImageFile.py'>
+
+    def save(
+        self, fp: StrOrBytesPath | IO[bytes], format: str | None = None, **params: Any
+    ) -> None:
+        """
+        Saves this image under the given filename.  If no format is
+        specified, the format to use is determined from the filename
+        extension, if possible.
+
+        Keyword options can be used to provide additional instructions
+        to the writer. If a writer doesn't recognise an option, it is
+        silently ignored. The available options are described in the
+        :doc:`image format documentation
+        <../handbook/image-file-formats>` for each writer.
+
+        You can use a file object instead of a filename. In this case,
+        you must always specify the format. The file object must
+        implement the ``seek``, ``tell``, and ``write``
+        methods, and be opened in binary mode.
+
+        :param fp: A filename (string), os.PathLike object or file object.
+        :param format: Optional format override.  If omitted, the
+           format to use is determined from the filename extension.
+           If a file object was used instead of a filename, this
+           parameter should always be used.
+        :param params: Extra parameters to the image writer. These can also be
+           set on the image itself through ``encoderinfo``. This is useful when
+           saving multiple images::
+
+             # Saving XMP data to a single image
+             from PIL import Image
+             red = Image.new("RGB", (1, 1), "#f00")
+             red.save("out.mpo", xmp=b"test")
+
+             # Saving XMP data to the second frame of an image
+             from PIL import Image
+             black = Image.new("RGB", (1, 1))
+             red = Image.new("RGB", (1, 1), "#f00")
+             red.encoderinfo = {"xmp": b"test"}
+             black.save("out.mpo", save_all=True, append_images=[red])
+        :returns: None
+        :exception ValueError: If the output format could not be determined
+           from the file name.  Use the format option to solve this.
+        :exception OSError: If the file could not be written.  The file
+           may have been created, and may contain partial data.
+        """
+
+        filename: str | bytes = ""
+        open_fp = False
+        if is_path(fp):
+            filename = os.fspath(fp)
+            open_fp = True
+        elif fp == sys.stdout:
+            try:
+                fp = sys.stdout.buffer
+            except AttributeError:
+                pass
+        if not filename and hasattr(fp, "name") and is_path(fp.name):
+            # only set the name for metadata purposes
+            filename = os.fspath(fp.name)
+
+        preinit()
+
+        filename_ext = os.path.splitext(filename)[1].lower()
+        ext = filename_ext.decode() if isinstance(filename_ext, bytes) else filename_ext
+
+        if not format:
+            if ext not in EXTENSION:
+                init()
+            try:
+                format = EXTENSION[ext]
+            except KeyError as e:
+                msg = f"unknown file extension: {ext}"
+                raise ValueError(msg) from e
+
+        from . import ImageFile
+
+        # may mutate self!
+        if isinstance(self, ImageFile.ImageFile) and os.path.abspath(
+            filename
+        ) == os.path.abspath(self.filename):
+            self._ensure_mutable()
+        else:
+            self.load()
+
+        save_all = params.pop("save_all", None)
+        self._default_encoderinfo = params
+        encoderinfo = getattr(self, "encoderinfo", {})
+        self._attach_default_encoderinfo(self)
+        self.encoderconfig: tuple[Any, ...] = ()
+
+        if format.upper() not in SAVE:
+            init()
+        if save_all or (
+            save_all is None
+            and params.get("append_images")
+            and format.upper() in SAVE_ALL
+        ):
+            save_handler = SAVE_ALL[format.upper()]
+        else:
+            save_handler = SAVE[format.upper()]
+
+        created = False
+        if open_fp:
+            created = not os.path.exists(filename)
+            if params.get("append", False):
+                # Open also for reading ("+"), because TIFF save_all
+                # writer needs to go back and edit the written data.
+                fp = builtins.open(filename, "r+b")
+            else:
+>               fp = builtins.open(filename, "w+b")
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\Brandon\\AppData\\Local\\Temp\\pytest-of-Brandon\\pytest-0\\test_long_unicode_paths_and_id0\\dossier long avec espaces et accents é dossier long avec espaces et accents é dossier long avec espaces et accents é \\image identique.png'
+
+.build\windows\venv\Lib\site-packages\PIL\Image.py:2583: FileNotFoundError
+_______________________ test_long_unicode_paths_and_identical_pdf_names_from_different_folders ________________________
+
+tmp_path = WindowsPath('C:/Users/Brandon/AppData/Local/Temp/pytest-of-Brandon/pytest-0/test_long_unicode_paths_and_id1')
+
+    def test_long_unicode_paths_and_identical_pdf_names_from_different_folders(
+        tmp_path: Path,
+    ) -> None:
+        first_folder = tmp_path / ("dossier PDF long avec accents é " * 3)
+        second_folder = tmp_path / "deuxième dossier 文件"
+        first_folder.mkdir()
+        second_folder.mkdir()
+        first = first_folder / "document identique.pdf"
+        second = second_folder / "document identique.pdf"
+>       first_original = create_pdf(first, [(100, 200)])
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\integration\test_pdf_merge.py:255:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\integration\test_pdf_merge.py:28: in create_pdf
+    with path.open("wb") as stream:
+         ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Users/Brandon/AppData/Local/Temp/pytest-of-Brandon/pytest-0/test_long_unicode_paths_and_id1/dossier PDF long avec accents é dossier PDF long avec accents é dossier PDF long avec accents é /document identique.pdf')
+mode = 'wb', buffering = -1, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\Brandon\\AppData\\Local\\Temp\\pytest-of-Brandon\\pytest-0\\test_long_unicode_paths_and_id1\\dossier PDF long avec accents é dossier PDF long avec accents é dossier PDF long avec accents é \\document identique.pdf'
+
+C:\Python312\Lib\pathlib.py:1013: FileNotFoundError
+__________________________________ test_qt_layouts_with_simulated_scale_factor[1.0] ___________________________________
+
+scale_factor = 1.0
+
+    @pytest.mark.parametrize("scale_factor", (1.0, 1.25, 1.5))
+    def test_qt_layouts_with_simulated_scale_factor(scale_factor: float) -> None:
+        script = """
+    from PySide6.QtWidgets import QPushButton, QScrollArea
+
+    from sbbn_toolbox.app import create_application
+    from sbbn_toolbox.ui.main_window import MainWindow, Page
+
+    application = create_application([])
+    window = MainWindow()
+    window.resize(window.minimumSize())
+    window.show()
+    application.processEvents()
+    assert abs(window.devicePixelRatio() - SCALE_FACTOR) < 0.01
+    for page in Page:
+        window.navigate_to(page)
+        application.processEvents()
+        scroll = window.page_stack.currentWidget()
+        assert isinstance(scroll, QScrollArea)
+        assert scroll.horizontalScrollBar().maximum() == 0
+        if page not in {Page.IMAGES, Page.PDF}:
+            assert scroll.verticalScrollBar().maximum() == 0
+        page_widget = scroll.widget()
+        assert page_widget is not None
+        buttons = page_widget.findChildren(QPushButton)
+        assert buttons
+        assert all(
+                button.isVisible()
+                or button.objectName()
+                in {"addMorePdfButton", "cancelConversionButton", "cancelPdfOperationButton"}
+            for button in buttons
+        )
+    print("dpi-layout-ok")
+    """.replace("SCALE_FACTOR", str(scale_factor))
+        environment = os.environ.copy()
+        environment["QT_QPA_PLATFORM"] = "offscreen"
+        environment["QT_SCALE_FACTOR"] = str(scale_factor)
+
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=environment,
+        )
+
+>       assert result.returncode == 0, result.stderr
+E       AssertionError: QFontDatabase: Cannot find font directory C:/Dev/sbbn_toolbox/.build/windows/venv/Lib/site-packages/PySide6/lib/fonts.
+E         Note that Qt no longer ships fonts. Deploy some (from https://dejavu-fonts.github.io/ for example) or switch to fontconfig.
+E         Traceback (most recent call last):
+E           File "<string>", line 20, in <module>
+E         AssertionError
+E
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['C:\\Dev\\sbbn_toolbox\\.build\\windows\\venv\\Scripts\\python.exe', '-c', '\nfrom PySide6.QtWi... switch to fontconfig.\nTraceback (most recent call last):\n  File "<string>", line 20, in <module>\nAssertionError\n').returncode
+
+tests\ui\test_navigation.py:181: AssertionError
+__________________________________ test_qt_layouts_with_simulated_scale_factor[1.25] __________________________________
+
+scale_factor = 1.25
+
+    @pytest.mark.parametrize("scale_factor", (1.0, 1.25, 1.5))
+    def test_qt_layouts_with_simulated_scale_factor(scale_factor: float) -> None:
+        script = """
+    from PySide6.QtWidgets import QPushButton, QScrollArea
+
+    from sbbn_toolbox.app import create_application
+    from sbbn_toolbox.ui.main_window import MainWindow, Page
+
+    application = create_application([])
+    window = MainWindow()
+    window.resize(window.minimumSize())
+    window.show()
+    application.processEvents()
+    assert abs(window.devicePixelRatio() - SCALE_FACTOR) < 0.01
+    for page in Page:
+        window.navigate_to(page)
+        application.processEvents()
+        scroll = window.page_stack.currentWidget()
+        assert isinstance(scroll, QScrollArea)
+        assert scroll.horizontalScrollBar().maximum() == 0
+        if page not in {Page.IMAGES, Page.PDF}:
+            assert scroll.verticalScrollBar().maximum() == 0
+        page_widget = scroll.widget()
+        assert page_widget is not None
+        buttons = page_widget.findChildren(QPushButton)
+        assert buttons
+        assert all(
+                button.isVisible()
+                or button.objectName()
+                in {"addMorePdfButton", "cancelConversionButton", "cancelPdfOperationButton"}
+            for button in buttons
+        )
+    print("dpi-layout-ok")
+    """.replace("SCALE_FACTOR", str(scale_factor))
+        environment = os.environ.copy()
+        environment["QT_QPA_PLATFORM"] = "offscreen"
+        environment["QT_SCALE_FACTOR"] = str(scale_factor)
+
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=environment,
+        )
+
+>       assert result.returncode == 0, result.stderr
+E       AssertionError: QFontDatabase: Cannot find font directory C:/Dev/sbbn_toolbox/.build/windows/venv/Lib/site-packages/PySide6/lib/fonts.
+E         Note that Qt no longer ships fonts. Deploy some (from https://dejavu-fonts.github.io/ for example) or switch to fontconfig.
+E         Traceback (most recent call last):
+E           File "<string>", line 20, in <module>
+E         AssertionError
+E
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['C:\\Dev\\sbbn_toolbox\\.build\\windows\\venv\\Scripts\\python.exe', '-c', '\nfrom PySide6.QtWi... switch to fontconfig.\nTraceback (most recent call last):\n  File "<string>", line 20, in <module>\nAssertionError\n').returncode
+
+tests\ui\test_navigation.py:181: AssertionError
+__________________________________ test_qt_layouts_with_simulated_scale_factor[1.5] ___________________________________
+
+scale_factor = 1.5
+
+    @pytest.mark.parametrize("scale_factor", (1.0, 1.25, 1.5))
+    def test_qt_layouts_with_simulated_scale_factor(scale_factor: float) -> None:
+        script = """
+    from PySide6.QtWidgets import QPushButton, QScrollArea
+
+    from sbbn_toolbox.app import create_application
+    from sbbn_toolbox.ui.main_window import MainWindow, Page
+
+    application = create_application([])
+    window = MainWindow()
+    window.resize(window.minimumSize())
+    window.show()
+    application.processEvents()
+    assert abs(window.devicePixelRatio() - SCALE_FACTOR) < 0.01
+    for page in Page:
+        window.navigate_to(page)
+        application.processEvents()
+        scroll = window.page_stack.currentWidget()
+        assert isinstance(scroll, QScrollArea)
+        assert scroll.horizontalScrollBar().maximum() == 0
+        if page not in {Page.IMAGES, Page.PDF}:
+            assert scroll.verticalScrollBar().maximum() == 0
+        page_widget = scroll.widget()
+        assert page_widget is not None
+        buttons = page_widget.findChildren(QPushButton)
+        assert buttons
+        assert all(
+                button.isVisible()
+                or button.objectName()
+                in {"addMorePdfButton", "cancelConversionButton", "cancelPdfOperationButton"}
+            for button in buttons
+        )
+    print("dpi-layout-ok")
+    """.replace("SCALE_FACTOR", str(scale_factor))
+        environment = os.environ.copy()
+        environment["QT_QPA_PLATFORM"] = "offscreen"
+        environment["QT_SCALE_FACTOR"] = str(scale_factor)
+
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=environment,
+        )
+
+>       assert result.returncode == 0, result.stderr
+E       AssertionError: QFontDatabase: Cannot find font directory C:/Dev/sbbn_toolbox/.build/windows/venv/Lib/site-packages/PySide6/lib/fonts.
+E         Note that Qt no longer ships fonts. Deploy some (from https://dejavu-fonts.github.io/ for example) or switch to fontconfig.
+E         Traceback (most recent call last):
+E           File "<string>", line 20, in <module>
+E         AssertionError
+E
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['C:\\Dev\\sbbn_toolbox\\.build\\windows\\venv\\Scripts\\python.exe', '-c', '\nfrom PySide6.QtWi... switch to fontconfig.\nTraceback (most recent call last):\n  File "<string>", line 20, in <module>\nAssertionError\n').returncode
+
+tests\ui\test_navigation.py:181: AssertionError
+================================================== warnings summary ===================================================
+<frozen importlib._bootstrap>:488
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=============================================== short test summary info ===============================================
+FAILED tests/integration/test_image_conversion.py::test_long_unicode_paths_and_identical_names_from_different_folders - FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\Brandon\\AppData\\Local\\Temp\\pytest-of-Brando...
+FAILED tests/integration/test_pdf_merge.py::test_long_unicode_paths_and_identical_pdf_names_from_different_folders - FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\Brandon\\AppData\\Local\\Temp\\pytest-of-Brando...
+FAILED tests/ui/test_navigation.py::test_qt_layouts_with_simulated_scale_factor[1.0] - AssertionError: QFontDatabase: Cannot find font directory C:/Dev/sbbn_toolbox/.build/windows/venv/Lib/site-packages...
+FAILED tests/ui/test_navigation.py::test_qt_layouts_with_simulated_scale_factor[1.25] - AssertionError: QFontDatabase: Cannot find font directory C:/Dev/sbbn_toolbox/.build/windows/venv/Lib/site-packages...
+FAILED tests/ui/test_navigation.py::test_qt_layouts_with_simulated_scale_factor[1.5] - AssertionError: QFontDatabase: Cannot find font directory C:/Dev/sbbn_toolbox/.build/windows/venv/Lib/site-packages...
+5 failed, 102 passed, 5 warnings in 5.45s
+sys:1: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
+La commande 'C:\Dev\sbbn_toolbox\.build\windows\venv\Scripts\python.exe' a Ã©chouÃ© avec le code 1.
+Au caractère C:\Dev\sbbn_toolbox\scripts\build_windows.ps1:16 : 9
++         throw "La commande '$Command' a Ã©chouÃ© avec le code $LASTEX ...
++         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : OperationStopped: (La commande 'C:...avec le code 1.:String) [], RuntimeException
+    + FullyQualifiedErrorId : La commande 'C:\Dev\sbbn_toolbox\.build\windows\venv\Scripts\python.exe' a Ã©chouÃ© avec
+    le code 1.
