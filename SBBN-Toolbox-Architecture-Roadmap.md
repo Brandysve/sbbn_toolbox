@@ -502,7 +502,108 @@ pages, selon le mode sélectionné, ainsi qu'aux rotations visibles.
 - Corriger uniquement les anomalies bloquantes ou gênantes.
 - Taguer `v1.0.0` après validation.
 
-## 14. Ordre conseillé des demandes à Codex
+## 14. Roadmap de la version 1.1.0 — Système de mise à jour portable
+
+La version 1.1.0 ajoute un système de mise à jour portable. Chaque phase doit rester
+bornée à son objectif et respecter les garanties de sécurité des fichiers définies dans
+ce document.
+
+### Règles générales de mise à jour
+
+- Le dépôt public utilisé pour les mises à jour est `Brandysve/sbbn_toolbox`.
+- Aucun token GitHub ne doit être intégré à l'application.
+- Seules les releases stables sont proposées automatiquement.
+- Chaque ZIP contient une version complète de l'application, jamais un patch différentiel.
+- Une ancienne version doit pouvoir passer directement à la dernière version stable.
+- Aucune mise à jour ne peut écraser les données personnelles.
+- Les mises à jour ne doivent pas nécessiter de droits administrateur.
+- Les prereleases sont réservées aux tests manuels.
+- L'application doit rester utilisable lorsque GitHub est indisponible.
+
+### Phase 8.1 — Versionnement et détection
+
+**Objectifs :**
+
+- Utiliser `pyproject.toml` comme source unique de version.
+- Afficher la version installée dans Paramètres.
+- Vérifier la dernière release stable du dépôt public `Brandysve/sbbn_toolbox`.
+- Comparer les versions selon SemVer.
+- Effectuer la vérification automatique au maximum une fois toutes les 24 heures.
+- Permettre une vérification manuelle.
+- Gérer silencieusement les erreurs réseau.
+- Identifier les assets ZIP et SHA-256 attendus.
+- Ne télécharger ni installer encore aucune mise à jour.
+
+**Critère de sortie :** l'application indique correctement si une version stable plus
+récente est disponible.
+
+### Phase 8.2 — Téléchargement sécurisé
+
+**Objectifs :**
+
+- Télécharger le ZIP et son SHA-256.
+- Afficher la progression et permettre l'annulation.
+- Vérifier le hash avant extraction.
+- Refuser une archive ou un hash invalide.
+- Valider strictement la structure du ZIP.
+- Protéger contre les chemins d'extraction sortant du dossier autorisé.
+- Nettoyer les téléchargements après erreur ou annulation.
+- Ne pas encore remplacer l'application active.
+
+**Critère de sortie :** une mise à jour valide peut être téléchargée et préparée sans
+modifier l'installation actuelle.
+
+### Phase 8.3 — Updater portable et rollback
+
+**Objectifs :**
+
+- Créer un updater séparé.
+- Fermer SBBN Toolbox avant remplacement.
+- Sauvegarder temporairement la version actuelle.
+- Remplacer uniquement les fichiers du programme.
+- Préserver impérativement `config.json` et le dossier `data` externe.
+- Redémarrer l'application après mise à jour.
+- Confirmer le premier démarrage réussi.
+- Restaurer automatiquement l'ancienne version en cas d'échec.
+- Nettoyer la sauvegarde après validation.
+
+**Critère de sortie :** la mise à jour et le retour arrière fonctionnent sans installation
+ni droits administrateur.
+
+### Phase 8.4 — Packaging et publication
+
+**Objectifs :**
+
+- Intégrer l'updater au build PyInstaller portable.
+- Livrer `config.default.json` sans écraser un `config.json` existant.
+- Contrôler la cohérence entre la version applicative, les métadonnées Windows, le tag Git
+  et la release.
+- Adapter les scripts PowerShell.
+- Produire le ZIP et son SHA-256.
+- Documenter la procédure de publication GitHub Releases.
+- Conserver les noms stables :
+  - `SBBN-Toolbox-Windows-x64.zip` ;
+  - `SBBN-Toolbox-Windows-x64.zip.sha256`.
+
+**Critère de sortie :** le ZIP 1.1.0 contient l'updater et peut être publié comme asset
+GitHub.
+
+### Phase 8.5 — Recette et publication 1.1.0
+
+**Objectifs :**
+
+- Tester une mise à jour réelle entre deux versions.
+- Tester l'absence de connexion.
+- Tester un hash erroné.
+- Tester une interruption.
+- Tester le rollback.
+- Vérifier la conservation des paramètres et données.
+- Publier la release stable `v1.1.0`.
+
+**Critère de sortie :** un PC équipé de SBBN Toolbox peut recevoir automatiquement une
+version ultérieure sans ZIP manuel.
+
+## 15. Ordre conseillé des demandes à Codex
 
 Utiliser des demandes courtes et bornées :
 
@@ -513,10 +614,15 @@ Utiliser des demandes courtes et bornées :
 5. `Implémente la Phase 4 avec rendu paresseux des vignettes et réorganisation page par page.`
 6. `Réalise la Phase 5 et fournis le résultat complet des tests.`
 7. `Réalise la Phase 6 et produis le ZIP Windows x64 avec son checksum.`
+8. `Réalise uniquement la Phase 8.1 et arrête-toi après les tests et le commit.`
+9. `Réalise uniquement la Phase 8.2 sans remplacer l'application active.`
+10. `Réalise uniquement la Phase 8.3 et valide le rollback.`
+11. `Réalise uniquement la Phase 8.4 et documente la publication.`
+12. `Réalise la Phase 8.5 et publie la release stable v1.1.0.`
 
 Ne pas demander à Codex de réaliser toutes les phases en une seule fois. Chaque phase doit être vérifiée dans l'application avant de poursuivre.
 
-## 15. Règles à placer dans `AGENTS.md`
+## 16. Règles à placer dans `AGENTS.md`
 
 ```markdown
 # SBBN Toolbox — règles de contribution
@@ -537,7 +643,7 @@ Ne pas demander à Codex de réaliser toutes les phases en une seule fois. Chaqu
 - Ne pas élargir le périmètre d'une phase sans demande explicite.
 ```
 
-## 16. Définition de terminé — version 1.0
+## 17. Définition de terminé — version 1.0
 
 La version 1.0 est terminée lorsque :
 
