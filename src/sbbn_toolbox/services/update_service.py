@@ -88,6 +88,7 @@ class ReleaseAssets:
 
     archive_url: str
     checksum_url: str
+    archive_digest: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -98,6 +99,7 @@ class UpdateCheckResult:
     latest_version: SemanticVersion
     assets: ReleaseAssets
     checked_at: datetime
+    release_notes: str = ""
     from_cache: bool = False
 
     @property
@@ -143,6 +145,7 @@ class UpdateService:
                     cached.result.latest_version,
                     cached.result.assets,
                     cached.result.checked_at,
+                    release_notes=cached.result.release_notes,
                     from_cache=True,
                 )
 
@@ -176,6 +179,7 @@ class UpdateService:
             raise ValueError("Les prereleases ne sont pas proposées automatiquement.")
 
         urls: dict[str, str] = {}
+        archive_digest: str | None = None
         for asset in assets_payload:
             if not isinstance(asset, dict):
                 continue
@@ -183,14 +187,27 @@ class UpdateService:
             url = asset.get("browser_download_url")
             if name in {ARCHIVE_NAME, CHECKSUM_NAME} and isinstance(url, str):
                 urls[name] = url
+                if name == ARCHIVE_NAME:
+                    digest = asset.get("digest")
+                    if digest is not None:
+                        if (
+                            not isinstance(digest, str)
+                            or re.fullmatch(r"sha256:[0-9a-fA-F]{64}", digest) is None
+                        ):
+                            raise ValueError("Digest GitHub invalide.")
+                        archive_digest = digest.removeprefix("sha256:").lower()
         if set(urls) != {ARCHIVE_NAME, CHECKSUM_NAME}:
             raise ValueError("Les assets attendus sont absents.")
-        assets = ReleaseAssets(urls[ARCHIVE_NAME], urls[CHECKSUM_NAME])
+        notes = payload.get("body", "")
+        if not isinstance(notes, str):
+            raise ValueError("Notes de release invalides.")
+        assets = ReleaseAssets(urls[ARCHIVE_NAME], urls[CHECKSUM_NAME], archive_digest)
         return UpdateCheckResult(
             self.installed_version,
             latest_version,
             assets,
             checked_at,
+            release_notes=notes,
         )
 
     def _read_cache(self, path: Path) -> _UpdateCache | None:
@@ -203,6 +220,8 @@ class UpdateService:
                 "latestVersion",
                 "archiveUrl",
                 "checksumUrl",
+                "archiveDigest",
+                "releaseNotes",
             }:
                 return None
             if payload["schemaVersion"] != 1:
@@ -215,6 +234,7 @@ class UpdateService:
                 payload["latestVersion"],
                 payload["archiveUrl"],
                 payload["checksumUrl"],
+                payload["releaseNotes"],
             )
             if all(value is None for value in optional_values):
                 return _UpdateCache(last_attempt_at.astimezone(UTC), None)
@@ -226,15 +246,29 @@ class UpdateService:
             latest = SemanticVersion.parse(str(payload["latestVersion"]))
             archive_url = payload["archiveUrl"]
             checksum_url = payload["checksumUrl"]
-            if not isinstance(archive_url, str) or not isinstance(checksum_url, str):
+            archive_digest = payload["archiveDigest"]
+            release_notes = payload["releaseNotes"]
+            if (
+                not isinstance(archive_url, str)
+                or not isinstance(checksum_url, str)
+                or not isinstance(release_notes, str)
+                or (
+                    archive_digest is not None
+                    and (
+                        not isinstance(archive_digest, str)
+                        or re.fullmatch(r"[0-9a-f]{64}", archive_digest) is None
+                    )
+                )
+            ):
                 return None
             return _UpdateCache(
                 last_attempt_at.astimezone(UTC),
                 UpdateCheckResult(
                     self.installed_version,
                     latest,
-                    ReleaseAssets(archive_url, checksum_url),
+                    ReleaseAssets(archive_url, checksum_url, archive_digest),
                     checked_at.astimezone(UTC),
+                    release_notes=release_notes,
                     from_cache=True,
                 ),
             )
@@ -250,6 +284,8 @@ class UpdateService:
             "latestVersion": str(result.latest_version),
             "archiveUrl": result.assets.archive_url,
             "checksumUrl": result.assets.checksum_url,
+            "archiveDigest": result.assets.archive_digest,
+            "releaseNotes": result.release_notes,
         }
 
     @staticmethod
@@ -265,6 +301,8 @@ class UpdateService:
             "latestVersion": str(result.latest_version) if result else None,
             "archiveUrl": result.assets.archive_url if result else None,
             "checksumUrl": result.assets.checksum_url if result else None,
+            "archiveDigest": result.assets.archive_digest if result else None,
+            "releaseNotes": result.release_notes if result else None,
         }
 
     @staticmethod

@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
 )
 
 from sbbn_toolbox.constants import (
+    CANCEL_UPDATE_DOWNLOAD,
     CHECK_FOR_UPDATES,
     CHOOSE_FOLDER,
     CHOOSE_OTHER_DATA,
@@ -26,6 +27,7 @@ from sbbn_toolbox.constants import (
     DATA_PATH_PLACEHOLDER,
     DATA_SECTION_DESCRIPTION,
     DATA_SECTION_TITLE,
+    DOWNLOAD_UPDATE,
     FIRST_LAUNCH_MESSAGE,
     FIRST_LAUNCH_TITLE,
     INSTALLED_VERSION,
@@ -40,6 +42,13 @@ from sbbn_toolbox.constants import (
     UPDATE_AVAILABLE,
     UPDATE_CHECK_UNAVAILABLE,
     UPDATE_CHECKING,
+    UPDATE_DOWNLOAD_CANCELLED,
+    UPDATE_DOWNLOAD_FAILED,
+    UPDATE_DOWNLOAD_PROGRESS_KNOWN,
+    UPDATE_DOWNLOAD_PROGRESS_UNKNOWN,
+    UPDATE_NO_RELEASE_NOTES,
+    UPDATE_READY,
+    UPDATE_RELEASE_NOTES,
     UPDATE_STATUS_IDLE,
     UPDATE_UP_TO_DATE,
     USE_DEFAULT_DATA,
@@ -83,6 +92,12 @@ class SettingsPage(QWidget):
             self.viewmodel.update_check_succeeded.connect(self._update_succeeded)
             self.viewmodel.update_check_failed.connect(self._update_failed)
             self.viewmodel.update_check_finished.connect(self._update_finished)
+            self.viewmodel.update_download_started.connect(self._download_started)
+            self.viewmodel.update_download_progress.connect(self._download_progress)
+            self.viewmodel.update_download_succeeded.connect(self._download_succeeded)
+            self.viewmodel.update_download_failed.connect(self._download_failed)
+            self.viewmodel.update_download_cancelled.connect(self._download_cancelled)
+            self.viewmodel.update_download_finished.connect(self._download_finished)
 
     def _data_card(self) -> QFrame:
         card = QFrame()
@@ -170,11 +185,31 @@ class SettingsPage(QWidget):
         self.update_status.setProperty("role", "muted")
         self.update_status.setWordWrap(True)
         layout.addWidget(self.update_status)
+        notes_title = QLabel(UPDATE_RELEASE_NOTES)
+        notes_title.setProperty("role", "muted")
+        layout.addWidget(notes_title)
+        self.release_notes = QLabel(UPDATE_NO_RELEASE_NOTES)
+        self.release_notes.setObjectName("releaseNotesLabel")
+        self.release_notes.setWordWrap(True)
+        layout.addWidget(self.release_notes)
         self.update_button = ActionButton(CHECK_FOR_UPDATES, variant="secondary")
         self.update_button.setObjectName("checkForUpdatesButton")
         self.update_button.setEnabled(self.viewmodel is not None)
         self.update_button.clicked.connect(self._check_manually)
         layout.addWidget(self.update_button)
+        self.download_button = ActionButton(DOWNLOAD_UPDATE)
+        self.download_button.setObjectName("downloadUpdateButton")
+        self.download_button.setEnabled(False)
+        self.download_button.clicked.connect(self._download_update)
+        layout.addWidget(self.download_button)
+        self.cancel_download_button = ActionButton(
+            CANCEL_UPDATE_DOWNLOAD,
+            variant="secondary",
+        )
+        self.cancel_download_button.setObjectName("cancelUpdateDownloadButton")
+        self.cancel_download_button.setVisible(False)
+        self.cancel_download_button.clicked.connect(self._cancel_download)
+        layout.addWidget(self.cancel_download_button)
         return card
 
     def initialize_configuration(self) -> None:
@@ -267,8 +302,11 @@ class SettingsPage(QWidget):
     def _update_succeeded(self, result: UpdateCheckResult) -> None:
         if result.update_available:
             self.update_status.setText(UPDATE_AVAILABLE.format(version=result.latest_version))
+            self.download_button.setEnabled(True)
         else:
             self.update_status.setText(UPDATE_UP_TO_DATE)
+            self.download_button.setEnabled(False)
+        self.release_notes.setText(result.release_notes or UPDATE_NO_RELEASE_NOTES)
 
     def _update_failed(self, manual: bool) -> None:
         if manual:
@@ -278,6 +316,60 @@ class SettingsPage(QWidget):
 
     def _update_finished(self) -> None:
         self.update_button.setEnabled(self.viewmodel is not None)
+
+    def _download_update(self) -> None:
+        if self.viewmodel is not None:
+            self.viewmodel.download_update()
+
+    def _cancel_download(self) -> None:
+        if self.viewmodel is not None:
+            self.viewmodel.cancel_update_download()
+
+    def _download_started(self) -> None:
+        self.download_button.setEnabled(False)
+        self.update_button.setEnabled(False)
+        self.cancel_download_button.setVisible(True)
+        self.cancel_download_button.setEnabled(True)
+
+    def _download_progress(
+        self,
+        downloaded: int,
+        total: int | None,
+        percentage: int | None,
+    ) -> None:
+        if total is not None and percentage is not None:
+            self.update_status.setText(
+                UPDATE_DOWNLOAD_PROGRESS_KNOWN.format(
+                    downloaded=downloaded,
+                    total=total,
+                    percentage=percentage,
+                )
+            )
+        else:
+            self.update_status.setText(
+                UPDATE_DOWNLOAD_PROGRESS_UNKNOWN.format(downloaded=downloaded)
+            )
+
+    def _download_succeeded(self, _prepared: object) -> None:
+        self.update_status.setText(UPDATE_READY)
+
+    def _download_failed(self, message: str) -> None:
+        self.update_status.setText(message or UPDATE_DOWNLOAD_FAILED)
+
+    def _download_cancelled(self) -> None:
+        self.update_status.setText(UPDATE_DOWNLOAD_CANCELLED)
+
+    def _download_finished(self) -> None:
+        self.update_button.setEnabled(self.viewmodel is not None)
+        self.cancel_download_button.setVisible(False)
+        self.cancel_download_button.setEnabled(False)
+        if (
+            self.viewmodel is not None
+            and self.viewmodel.prepared_update is None
+            and self.viewmodel.latest_release is not None
+            and self.viewmodel.latest_release.update_available
+        ):
+            self.download_button.setEnabled(True)
 
     def _clear_selection(self) -> None:
         self._selected_path = None

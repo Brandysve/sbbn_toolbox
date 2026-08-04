@@ -134,7 +134,7 @@ def test_user_readme_contains_required_portable_guidance() -> None:
     assert "n’est pas déclarée" in lowered
 
 
-def test_only_update_service_imports_network_client() -> None:
+def test_only_update_services_import_network_clients() -> None:
     forbidden_roots = {
         "aiohttp",
         "ftplib",
@@ -146,6 +146,9 @@ def test_only_update_service_imports_network_client() -> None:
     }
     imported_roots: set[str] = set()
     update_service = REPOSITORY_ROOT / "src/sbbn_toolbox/services/update_service.py"
+    preparation_service = (
+        REPOSITORY_ROOT / "src/sbbn_toolbox/services/update_preparation_service.py"
+    )
     for source in (REPOSITORY_ROOT / "src" / "sbbn_toolbox").rglob("*.py"):
         tree = ast.parse(source.read_text(encoding="utf-8"), filename=str(source))
         source_imports: set[str] = set()
@@ -156,6 +159,8 @@ def test_only_update_service_imports_network_client() -> None:
                 source_imports.add(node.module.split(".", 1)[0])
         if source == update_service:
             assert source_imports & forbidden_roots == {"urllib"}
+        elif source == preparation_service:
+            assert source_imports & forbidden_roots == {"http", "urllib"}
         else:
             imported_roots.update(source_imports)
 

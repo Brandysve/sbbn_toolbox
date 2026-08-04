@@ -168,7 +168,12 @@ for page in Page:
     assert all(
             button.isVisible()
             or button.objectName()
-            in {"addMorePdfButton", "cancelConversionButton", "cancelPdfOperationButton"}
+            in {
+                "addMorePdfButton",
+                "cancelConversionButton",
+                "cancelPdfOperationButton",
+                "cancelUpdateDownloadButton",
+            }
         for button in buttons
     )
 print("dpi-layout-ok")

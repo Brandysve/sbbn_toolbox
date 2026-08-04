@@ -548,6 +548,9 @@ récente est disponible.
 - Valider strictement la structure du ZIP.
 - Protéger contre les chemins d'extraction sortant du dossier autorisé.
 - Nettoyer les téléchargements après erreur ou annulation.
+- Accepter temporairement le `config.json` des ZIP 1.0.0 pour compatibilité, sans
+  l'extraire ni préparer son écrasement. Son remplacement par `config.default.json`
+  reste prévu pour la Phase 8.4.
 - Ne pas encore remplacer l'application active.
 
 **Critère de sortie :** une mise à jour valide peut être téléchargée et préparée sans

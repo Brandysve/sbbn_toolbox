@@ -59,6 +59,7 @@ def test_settings_page_displays_version_and_manual_update_result(
     config_service.initialize(tmp_path / "données")
     release = {
         "tag_name": "v1.1.0",
+        "body": "Corrections et améliorations.",
         "draft": False,
         "prerelease": False,
         "assets": [
@@ -81,3 +82,16 @@ def test_settings_page_displays_version_and_manual_update_result(
     assert page.update_button.isEnabled()
     assert "1.1.0" in page.update_status.text()
     assert "disponible" in page.update_status.text()
+    assert page.download_button.isEnabled()
+    assert page.release_notes.text() == "Corrections et améliorations."
+    assert page.findChild(type(page.download_button), "installUpdateButton") is None
+
+    viewmodel.update_download_started.emit()
+    assert not page.cancel_download_button.isHidden()
+    assert not page.download_button.isEnabled()
+    viewmodel.update_download_progress.emit(512, 1_024, 50)
+    assert page.update_status.text() == "512 / 1024 octets (50 %)"
+    viewmodel.update_download_succeeded.emit(object())
+    viewmodel.update_download_finished.emit()
+    assert page.update_status.text() == "Mise à jour prête à être installée."
+    assert page.cancel_download_button.isHidden()

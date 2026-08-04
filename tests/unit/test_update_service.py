@@ -17,12 +17,14 @@ from sbbn_toolbox.services.update_service import (
 def release_payload(version: str = "v1.1.0") -> dict[str, object]:
     return {
         "tag_name": version,
+        "body": "Notes de la version stable.",
         "draft": False,
         "prerelease": False,
         "assets": [
             {
                 "name": ARCHIVE_NAME,
                 "browser_download_url": f"https://example.test/{ARCHIVE_NAME}",
+                "digest": f"sha256:{'a' * 64}",
             },
             {
                 "name": CHECKSUM_NAME,
@@ -68,6 +70,8 @@ def test_stable_release_identifies_zip_and_checksum(tmp_path: Path) -> None:
     assert str(result.latest_version) == "1.1.0"
     assert result.assets.archive_url.endswith(ARCHIVE_NAME)
     assert result.assets.checksum_url.endswith(CHECKSUM_NAME)
+    assert result.assets.archive_digest == "a" * 64
+    assert result.release_notes == "Notes de la version stable."
     assert not result.from_cache
     assert json.loads((tmp_path / "update-check.json").read_text(encoding="utf-8")) == {
         "schemaVersion": 1,
@@ -76,6 +80,8 @@ def test_stable_release_identifies_zip_and_checksum(tmp_path: Path) -> None:
         "latestVersion": "1.1.0",
         "archiveUrl": f"https://example.test/{ARCHIVE_NAME}",
         "checksumUrl": f"https://example.test/{CHECKSUM_NAME}",
+        "archiveDigest": "a" * 64,
+        "releaseNotes": "Notes de la version stable.",
     }
 
 
