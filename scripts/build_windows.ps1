@@ -48,10 +48,12 @@ $distRoot = Join-Path $pyinstallerRoot "dist"
 $workRoot = Join-Path $pyinstallerRoot "work"
 $distPathFile = Join-Path $buildRoot "pyinstaller-dist.path"
 $requirementsPath = Join-Path $repoRoot "requirements.lock"
+$pyprojectPath = Join-Path $repoRoot "pyproject.toml"
 $windowsRequirementsPath = Join-Path $repoRoot "packaging\requirements-windows.lock"
 $resourceManifestPath = Join-Path $repoRoot "packaging\pyinstaller_resources.json"
 $entrypointPath = Join-Path $repoRoot "packaging\windows_entrypoint.py"
-$versionInfoPath = Join-Path $repoRoot "packaging\windows_version_info.txt"
+$versionGeneratorPath = Join-Path $repoRoot "packaging\generate_windows_version_info.py"
+$versionInfoPath = Join-Path $pyinstallerRoot "windows_version_info.txt"
 New-Item -ItemType Directory -Force -Path $buildRoot | Out-Null
 
 Invoke-Checked "py.exe" @(
@@ -78,6 +80,11 @@ if (-not $SkipTests) {
 Remove-ControlledDirectory -Path $pyinstallerRoot -BuildRoot $buildRoot
 Remove-Item -LiteralPath $distPathFile -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $pyinstallerRoot | Out-Null
+Invoke-Checked $python @(
+    $versionGeneratorPath,
+    "--pyproject", $pyprojectPath,
+    "--output", $versionInfoPath
+)
 
 $pyinstallerArguments = @(
     "-m", "PyInstaller",
@@ -87,6 +94,7 @@ $pyinstallerArguments = @(
     "--windowed",
     "--name=SBBN-Toolbox",
     "--contents-directory=runtime",
+    "--copy-metadata=sbbn-toolbox",
     "--version-file=$versionInfoPath",
     "--distpath=$distRoot",
     "--workpath=$workRoot",

@@ -1,3 +1,5 @@
 """SBBN Toolbox."""
 
-__version__ = "0.0.0"
+from sbbn_toolbox.version import application_version
+
+__version__ = application_version()

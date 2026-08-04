@@ -1,4 +1,4 @@
-SBBN Toolbox 1.0.0 — Windows 10/11 x64
+SBBN Toolbox — Windows 10/11 x64
 ================================================
 
 INSTALLATION ET PREMIER LANCEMENT

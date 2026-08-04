@@ -105,10 +105,10 @@ def test_all_pages_remain_usable_when_resized(
         page_widget = scroll.widget()
         assert page_widget is not None
         assert scroll.horizontalScrollBar().maximum() == 0
-        if page not in {Page.IMAGES, Page.PDF}:
+        if page not in {Page.IMAGES, Page.PDF, Page.SETTINGS}:
             assert scroll.verticalScrollBar().maximum() == 0
         assert page_widget.minimumSizeHint().width() <= scroll.viewport().width()
-        if page not in {Page.IMAGES, Page.PDF}:
+        if page not in {Page.IMAGES, Page.PDF, Page.SETTINGS}:
             assert page_widget.minimumSizeHint().height() <= scroll.viewport().height()
 
         buttons = page_widget.findChildren(QPushButton)
@@ -159,7 +159,7 @@ for page in Page:
     scroll = window.page_stack.currentWidget()
     assert isinstance(scroll, QScrollArea)
     assert scroll.horizontalScrollBar().maximum() == 0
-    if page not in {Page.IMAGES, Page.PDF}:
+    if page not in {Page.IMAGES, Page.PDF, Page.SETTINGS}:
         assert scroll.verticalScrollBar().maximum() == 0
     page_widget = scroll.widget()
     assert page_widget is not None

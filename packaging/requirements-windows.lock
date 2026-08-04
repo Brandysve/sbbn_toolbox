@@ -1,3 +1,3 @@
-# Dépendances de packaging Windows, verrouillées pour la version 1.0.0.
+# Dépendances de packaging Windows verrouillées.
 pyinstaller==6.16.0
 pyinstaller-hooks-contrib==2025.8

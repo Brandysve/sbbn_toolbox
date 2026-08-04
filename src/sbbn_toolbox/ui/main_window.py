@@ -187,4 +187,6 @@ class MainWindow(QMainWindow):
                 return
         self.images_page.viewmodel.shutdown()
         self.pdf_page.viewmodel.shutdown()
+        if self.settings_page.viewmodel is not None:
+            self.settings_page.viewmodel.shutdown()
         super().closeEvent(event)

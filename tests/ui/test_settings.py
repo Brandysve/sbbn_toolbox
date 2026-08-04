@@ -7,6 +7,7 @@ from pytestqt.qtbot import QtBot
 
 from sbbn_toolbox.constants import DATA_LOCATION_UPDATED
 from sbbn_toolbox.services.config_service import ConfigService
+from sbbn_toolbox.services.update_service import ARCHIVE_NAME, CHECKSUM_NAME, UpdateService
 from sbbn_toolbox.ui.pages.settings_page import SettingsPage
 from sbbn_toolbox.viewmodels.settings_vm import SettingsViewModel
 
@@ -46,3 +47,37 @@ def test_settings_page_exposes_distinct_location_actions(
     assert notification.args == [DATA_LOCATION_UPDATED]
     assert viewmodel.current_data_path == destination
     assert page.path_field.text() == str(destination)
+
+
+def test_settings_page_displays_version_and_manual_update_result(
+    qtbot: QtBot,
+    tmp_path: Path,
+) -> None:
+    program_dir = tmp_path / "programme"
+    program_dir.mkdir()
+    config_service = ConfigService(program_dir)
+    config_service.initialize(tmp_path / "données")
+    release = {
+        "tag_name": "v1.1.0",
+        "draft": False,
+        "prerelease": False,
+        "assets": [
+            {"name": ARCHIVE_NAME, "browser_download_url": "https://example.test/app.zip"},
+            {"name": CHECKSUM_NAME, "browser_download_url": "https://example.test/app.sha256"},
+        ],
+    }
+    viewmodel = SettingsViewModel(
+        config_service,
+        UpdateService("1.0.0", fetcher=lambda _url: release),
+    )
+    viewmodel.load()
+    page = SettingsPage(viewmodel)
+    qtbot.addWidget(page)
+
+    assert viewmodel.installed_version in page.version_label.text()
+    with qtbot.waitSignal(viewmodel.update_check_finished, timeout=2_000):
+        qtbot.mouseClick(page.update_button, Qt.MouseButton.LeftButton)
+
+    assert page.update_button.isEnabled()
+    assert "1.1.0" in page.update_status.text()
+    assert "disponible" in page.update_status.text()

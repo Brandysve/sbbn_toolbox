@@ -12,5 +12,6 @@
 - Exécuter Ruff et pytest avant de déclarer une phase terminée.
 - Conserver les textes d'interface en français dans un module centralisé.
 - Utiliser uniquement les tokens du design system SBBN pour les couleurs et espacements.
-- Ne pas ajouter de télémétrie, d'accès réseau ou de mise à jour automatique.
+- Ne pas ajouter de télémétrie. Limiter l'accès réseau au service de mise à jour public,
+  sans token GitHub ni envoi de données personnelles.
 - Ne pas élargir le périmètre d'une phase sans demande explicite.

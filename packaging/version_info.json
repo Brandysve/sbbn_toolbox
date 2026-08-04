@@ -1,7 +1,6 @@
 {
   "productName": "SBBN Toolbox",
   "executableName": "SBBN-Toolbox.exe",
-  "version": "1.0.0",
   "architecture": "Windows x64",
   "console": false,
   "requiresAdministrator": false

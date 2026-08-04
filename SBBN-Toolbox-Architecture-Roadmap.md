@@ -150,11 +150,11 @@ sbbn-toolbox/
 │   └── smoke_test.ps1
 └── packaging/
     ├── README.txt
+    ├── generate_windows_version_info.py
     ├── pyinstaller_resources.json
     ├── requirements-windows.lock
     ├── version_info.json
-    ├── windows_entrypoint.py
-    └── windows_version_info.txt
+    └── windows_entrypoint.py
 ```
 
 ## 6. Distribution portable et données
@@ -639,7 +639,8 @@ Ne pas demander à Codex de réaliser toutes les phases en une seule fois. Chaqu
 - Exécuter Ruff et pytest avant de déclarer une phase terminée.
 - Conserver les textes d'interface en français dans un module centralisé.
 - Utiliser uniquement les tokens du design system SBBN pour les couleurs et espacements.
-- Ne pas ajouter de télémétrie, d'accès réseau ou de mise à jour automatique.
+- Ne pas ajouter de télémétrie. Limiter l'accès réseau au service de mise à jour public,
+  sans token GitHub ni envoi de données personnelles.
 - Ne pas élargir le périmètre d'une phase sans demande explicite.
 ```
 

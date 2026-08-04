@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
 )
 
 from sbbn_toolbox.constants import (
+    CHECK_FOR_UPDATES,
     CHOOSE_FOLDER,
     CHOOSE_OTHER_DATA,
     DATA_LOCATION_ERROR_TITLE,
@@ -27,6 +28,7 @@ from sbbn_toolbox.constants import (
     DATA_SECTION_TITLE,
     FIRST_LAUNCH_MESSAGE,
     FIRST_LAUNCH_TITLE,
+    INSTALLED_VERSION,
     INTERFACE_SECTION_DESCRIPTION,
     INTERFACE_SECTION_TITLE,
     MIGRATE_SETTINGS,
@@ -35,10 +37,18 @@ from sbbn_toolbox.constants import (
     SELECT_DATA_FOLDER,
     SETTINGS_DESCRIPTION,
     SETTINGS_TITLE,
+    UPDATE_AVAILABLE,
+    UPDATE_CHECK_UNAVAILABLE,
+    UPDATE_CHECKING,
+    UPDATE_STATUS_IDLE,
+    UPDATE_UP_TO_DATE,
     USE_DEFAULT_DATA,
     USE_NEW_LOCATION,
+    VERSION_SECTION_DESCRIPTION,
+    VERSION_SECTION_TITLE,
 )
 from sbbn_toolbox.services.config_service import ConfigurationError
+from sbbn_toolbox.services.update_service import UpdateCheckResult
 from sbbn_toolbox.ui.theme.tokens import SPACING
 from sbbn_toolbox.ui.widgets.buttons import ActionButton
 from sbbn_toolbox.ui.widgets.page_header import PageHeader
@@ -65,9 +75,14 @@ class SettingsPage(QWidget):
         layout.addWidget(PageHeader(SETTINGS_TITLE, SETTINGS_DESCRIPTION))
         layout.addWidget(self._data_card())
         layout.addWidget(self._interface_card())
+        layout.addWidget(self._version_card())
         layout.addStretch()
         if self.viewmodel is not None:
             self.viewmodel.data_path_changed.connect(self._set_current_path)
+            self.viewmodel.update_check_started.connect(self._update_started)
+            self.viewmodel.update_check_succeeded.connect(self._update_succeeded)
+            self.viewmodel.update_check_failed.connect(self._update_failed)
+            self.viewmodel.update_check_finished.connect(self._update_finished)
 
     def _data_card(self) -> QFrame:
         card = QFrame()
@@ -132,6 +147,36 @@ class SettingsPage(QWidget):
         layout.addWidget(scale)
         return card
 
+    def _version_card(self) -> QFrame:
+        card = QFrame()
+        card.setProperty("card", True)
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(SPACING.xl, SPACING.xl, SPACING.xl, SPACING.xl)
+        layout.setSpacing(SPACING.md)
+
+        title = QLabel(VERSION_SECTION_TITLE)
+        title.setProperty("role", "sectionTitle")
+        layout.addWidget(title)
+        description = QLabel(VERSION_SECTION_DESCRIPTION)
+        description.setProperty("role", "muted")
+        description.setWordWrap(True)
+        layout.addWidget(description)
+        installed_version = self.viewmodel.installed_version if self.viewmodel else "—"
+        self.version_label = QLabel(INSTALLED_VERSION.format(version=installed_version))
+        self.version_label.setObjectName("installedVersionLabel")
+        layout.addWidget(self.version_label)
+        self.update_status = QLabel(UPDATE_STATUS_IDLE)
+        self.update_status.setObjectName("updateStatusLabel")
+        self.update_status.setProperty("role", "muted")
+        self.update_status.setWordWrap(True)
+        layout.addWidget(self.update_status)
+        self.update_button = ActionButton(CHECK_FOR_UPDATES, variant="secondary")
+        self.update_button.setObjectName("checkForUpdatesButton")
+        self.update_button.setEnabled(self.viewmodel is not None)
+        self.update_button.clicked.connect(self._check_manually)
+        layout.addWidget(self.update_button)
+        return card
+
     def initialize_configuration(self) -> None:
         """Charger la configuration ou ouvrir le parcours de premier lancement."""
         if self.viewmodel is None:
@@ -139,6 +184,8 @@ class SettingsPage(QWidget):
         try:
             if self.viewmodel.load() is None:
                 self._show_first_launch()
+            else:
+                self.viewmodel.check_for_updates(manual=False)
         except ConfigurationError:
             QMessageBox.warning(
                 self,
@@ -182,6 +229,7 @@ class SettingsPage(QWidget):
         try:
             self.viewmodel.initialize(path)
             self.notification_requested.emit(DATA_LOCATION_UPDATED)
+            self.viewmodel.check_for_updates(manual=False)
         except ConfigurationError as error:
             self._show_error(str(error))
 
@@ -207,6 +255,29 @@ class SettingsPage(QWidget):
 
     def _set_current_path(self, path: str) -> None:
         self.path_field.setText(path)
+
+    def _check_manually(self) -> None:
+        if self.viewmodel is not None:
+            self.viewmodel.check_for_updates(manual=True)
+
+    def _update_started(self) -> None:
+        self.update_button.setEnabled(False)
+        self.update_status.setText(UPDATE_CHECKING)
+
+    def _update_succeeded(self, result: UpdateCheckResult) -> None:
+        if result.update_available:
+            self.update_status.setText(UPDATE_AVAILABLE.format(version=result.latest_version))
+        else:
+            self.update_status.setText(UPDATE_UP_TO_DATE)
+
+    def _update_failed(self, manual: bool) -> None:
+        if manual:
+            self.update_status.setText(UPDATE_CHECK_UNAVAILABLE)
+        else:
+            self.update_status.setText(UPDATE_STATUS_IDLE)
+
+    def _update_finished(self) -> None:
+        self.update_button.setEnabled(self.viewmodel is not None)
 
     def _clear_selection(self) -> None:
         self._selected_path = None

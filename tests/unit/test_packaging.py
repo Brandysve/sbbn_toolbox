@@ -18,7 +18,6 @@ def test_windows_packaging_metadata_and_locked_compiler() -> None:
     assert metadata == {
         "productName": "SBBN Toolbox",
         "executableName": "SBBN-Toolbox.exe",
-        "version": "1.0.0",
         "architecture": "Windows x64",
         "console": False,
         "requiresAdministrator": False,
@@ -42,16 +41,19 @@ def test_packaging_scripts_enforce_windows_and_expected_archive() -> None:
     )
     for source_path in (
         "requirementsPath",
+        "pyprojectPath",
         "windowsRequirementsPath",
         "resourceManifestPath",
         "entrypointPath",
-        "versionInfoPath",
+        "versionGeneratorPath",
     ):
         assert f"${source_path} = Join-Path $repoRoot" in scripts["build_windows.ps1"]
     assert '"--onedir"' in scripts["build_windows.ps1"]
     assert '"--windowed"' in scripts["build_windows.ps1"]
     assert '"--contents-directory=runtime"' in scripts["build_windows.ps1"]
+    assert '"--copy-metadata=sbbn-toolbox"' in scripts["build_windows.ps1"]
     assert '"--name=SBBN-Toolbox"' in scripts["build_windows.ps1"]
+    assert "$versionInfoPath = Join-Path $pyinstallerRoot" in scripts["build_windows.ps1"]
     assert '"--version-file=$versionInfoPath"' in scripts["build_windows.ps1"]
     assert '"--add-data=$sourcePath;$($resource.destination)"' in scripts["build_windows.ps1"]
     assert (
@@ -132,7 +134,7 @@ def test_user_readme_contains_required_portable_guidance() -> None:
     assert "n’est pas déclarée" in lowered
 
 
-def test_application_source_imports_no_network_client() -> None:
+def test_only_update_service_imports_network_client() -> None:
     forbidden_roots = {
         "aiohttp",
         "ftplib",
@@ -143,12 +145,18 @@ def test_application_source_imports_no_network_client() -> None:
         "webbrowser",
     }
     imported_roots: set[str] = set()
+    update_service = REPOSITORY_ROOT / "src/sbbn_toolbox/services/update_service.py"
     for source in (REPOSITORY_ROOT / "src" / "sbbn_toolbox").rglob("*.py"):
         tree = ast.parse(source.read_text(encoding="utf-8"), filename=str(source))
+        source_imports: set[str] = set()
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
-                imported_roots.update(alias.name.split(".", 1)[0] for alias in node.names)
+                source_imports.update(alias.name.split(".", 1)[0] for alias in node.names)
             elif isinstance(node, ast.ImportFrom) and node.module:
-                imported_roots.add(node.module.split(".", 1)[0])
+                source_imports.add(node.module.split(".", 1)[0])
+        if source == update_service:
+            assert source_imports & forbidden_roots == {"urllib"}
+        else:
+            imported_roots.update(source_imports)
 
     assert imported_roots.isdisjoint(forbidden_roots)
