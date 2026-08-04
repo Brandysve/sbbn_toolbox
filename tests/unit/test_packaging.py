@@ -94,6 +94,24 @@ def test_pyinstaller_resources_resolve_from_repository_outside_working_directory
     assert all(source.is_file() for source, _ in resolved)
 
 
+def test_zip_validation_normalizes_windows_entry_separators() -> None:
+    package_script = (REPOSITORY_ROOT / "scripts" / "package_zip.ps1").read_text(encoding="utf-8")
+    windows_entries = [
+        r"SBBN-Toolbox\SBBN-Toolbox.exe",
+        r"SBBN-Toolbox\config.json",
+        r"SBBN-Toolbox\README.txt",
+        r"SBBN-Toolbox\runtime\python312.dll",
+    ]
+
+    entries = [entry.replace("\\", "/") for entry in windows_entries]
+
+    assert r"ForEach-Object { $_.FullName -replace '\\', '/' }" in package_script
+    assert "SBBN-Toolbox/SBBN-Toolbox.exe" in entries
+    assert "SBBN-Toolbox/config.json" in entries
+    assert "SBBN-Toolbox/README.txt" in entries
+    assert any(entry.startswith("SBBN-Toolbox/runtime/") for entry in entries)
+
+
 def test_user_readme_contains_required_portable_guidance() -> None:
     readme = (REPOSITORY_ROOT / "packaging" / "README.txt").read_text(encoding="utf-8")
     lowered = readme.lower()

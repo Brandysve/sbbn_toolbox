@@ -76,7 +76,10 @@ $hash = (Get-FileHash -LiteralPath $zipPath -Algorithm SHA256).Hash.ToLowerInvar
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $archive = [IO.Compression.ZipFile]::OpenRead($zipPath)
 try {
-    $entries = @($archive.Entries | ForEach-Object { $_.FullName })
+    $entries = @(
+        $archive.Entries |
+            ForEach-Object { $_.FullName -replace '\\', '/' }
+    )
     if (-not ($entries -contains "SBBN-Toolbox/SBBN-Toolbox.exe") -or
         -not ($entries -contains "SBBN-Toolbox/config.json") -or
         -not ($entries -contains "SBBN-Toolbox/README.txt") -or
